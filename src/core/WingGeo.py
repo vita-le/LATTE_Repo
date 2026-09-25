@@ -21,17 +21,20 @@ def distance(p1, p2):
     return sum((a - b) ** 2 for a, b in zip(p1, p2)) ** 0.5
 
 
-def open_cpacs(filename):
+def open_cpacs(filename, configuration=None):
     """Open a CPACS file with TiXI and TiGL."""
 
     tixi = tixi3wrapper.Tixi3()
     tixi.open(str(filename))
 
     tigl = tigl3wrapper.Tigl3()
-    tigl.open(tixi, "")
+
+    if configuration is None:
+        tigl.open(tixi, "")
+    else:
+        tigl.open(tixi, configuration)
 
     return tigl, tixi
-
 
 def extract_wing(tigl, wing_uid, n=N_STATIONS):
     """

@@ -20,6 +20,7 @@ def set_axes_equal(ax):
     This is important for checking the actual proportions
     of the aircraft geometry.
     """
+
     x_limits = ax.get_xlim3d()
     y_limits = ax.get_ylim3d()
     z_limits = ax.get_zlim3d()
@@ -32,34 +33,50 @@ def set_axes_equal(ax):
     y_middle = sum(y_limits) / 2
     z_middle = sum(z_limits) / 2
 
-    radius = 0.5 * max(x_range, y_range, z_range)
+    radius = 0.5 * max(
+        x_range,
+        y_range,
+        z_range,
+    )
 
     ax.set_xlim3d(
         x_middle - radius,
-        x_middle + radius
+        x_middle + radius,
     )
 
     ax.set_ylim3d(
         y_middle - radius,
-        y_middle + radius
+        y_middle + radius,
     )
 
     ax.set_zlim3d(
         z_middle - radius,
-        z_middle + radius
+        z_middle + radius,
     )
 
 
-def plot_wing_geometry(cpacs_file):
-    """Plot all wing geometries contained in a CPACS file."""
+def plot_wing_geometry(cpacs_file, configuration):
+    """
+    Plot all wing geometries contained in a CPACS configuration.
+    """
 
-    tigl, tixi = open_cpacs(cpacs_file)
+    tigl, tixi = open_cpacs(
+        cpacs_file,
+        configuration,
+    )
 
     try:
+
         wings = extract_all_wings(tigl)
 
-        fig = plt.figure(figsize=(12, 8))
-        ax = fig.add_subplot(111, projection="3d")
+        fig = plt.figure(
+            figsize=(12, 8)
+        )
+
+        ax = fig.add_subplot(
+            111,
+            projection="3d",
+        )
 
         for wing in wings:
 
@@ -107,7 +124,10 @@ def plot_wing_geometry(cpacs_file):
                     for s in stations
                 ]
 
+                # -------------------------------------------------
                 # Plot leading edge
+                # -------------------------------------------------
+
                 ax.plot(
                     le_x,
                     le_y,
@@ -117,7 +137,10 @@ def plot_wing_geometry(cpacs_file):
                     label=f"{wing_uid} LE",
                 )
 
+                # -------------------------------------------------
                 # Plot trailing edge
+                # -------------------------------------------------
+
                 ax.plot(
                     te_x,
                     te_y,
@@ -152,7 +175,9 @@ def plot_wing_geometry(cpacs_file):
         ax.set_ylabel("Y [m]")
         ax.set_zlabel("Z [m]")
 
-        ax.set_title("CPACS Aircraft Geometry")
+        ax.set_title(
+            f"CPACS Aircraft Geometry - {configuration}"
+        )
 
         # ---------------------------------------------------------
         # Equal physical scale
@@ -178,9 +203,11 @@ def plot_wing_geometry(cpacs_file):
         ax.legend()
 
         plt.tight_layout()
+
         plt.show()
 
     finally:
+
         tigl.close()
         tixi.close()
 
@@ -188,20 +215,42 @@ def plot_wing_geometry(cpacs_file):
 def main():
 
     if len(sys.argv) > 1:
-        cpacs = Path(sys.argv[1])
+
+        cpacs = Path(
+            sys.argv[1]
+        )
+
     else:
-        cpacs = Path(DEFAULT_CPACS)
+
+        cpacs = Path(
+            DEFAULT_CPACS
+        )
 
         print(
             f"Using default CPACS: {cpacs}"
         )
 
     if not cpacs.is_file():
+
         raise FileNotFoundError(
             f"CPACS file not found: {cpacs}"
         )
 
-    plot_wing_geometry(cpacs)
+    if len(sys.argv) > 2:
+
+        configuration = sys.argv[2]
+
+    else:
+
+        raise ValueError(
+            "A CPACS configuration must be specified "
+            "when running plot_wing.py directly."
+        )
+
+    plot_wing_geometry(
+        cpacs,
+        configuration,
+    )
 
 
 if __name__ == "__main__":
