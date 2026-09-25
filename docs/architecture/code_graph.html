@@ -1,0 +1,247 @@
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>LATTE Code Graph</title>
+
+<style>
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #F4F6F8;
+}
+
+.header {
+    height: 75px;
+    background: #FFFFFF;
+    border-bottom: 1px solid #D0D5DD;
+
+    display: flex;
+    align-items: center;
+
+    padding-left: 30px;
+    padding-right: 30px;
+
+    box-sizing: border-box;
+}
+
+.title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1F2933;
+}
+
+.subtitle {
+    margin-left: 15px;
+    font-size: 13px;
+    color: #667085;
+}
+
+.tabs {
+    height: 55px;
+    background: #FFFFFF;
+    border-bottom: 1px solid #D0D5DD;
+
+    display: flex;
+    align-items: center;
+
+    padding-left: 30px;
+    gap: 8px;
+}
+
+.tab {
+    border: none;
+    background: transparent;
+
+    padding: 9px 18px;
+
+    border-radius: 6px;
+
+    font-family: "Segoe UI", Arial, sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+
+    color: #667085;
+
+    cursor: pointer;
+}
+
+.tab:hover {
+    background: #F2F4F7;
+    color: #1F2933;
+}
+
+.tab.active {
+    background: #1F5A7A;
+    color: #FFFFFF;
+}
+
+.graph-container {
+    width: 100%;
+    height: calc(100vh - 130px);
+
+    display: none;
+}
+
+.graph-container.active {
+    display: block;
+}
+
+</style>
+
+<script>
+
+function showGraph(name) {
+
+    const graphs = [
+        "architecture",
+        "dependencies",
+        "calls"
+    ];
+
+    const tabs = [
+        "tab-architecture",
+        "tab-dependencies",
+        "tab-calls"
+    ];
+
+    for (const graph of graphs) {
+
+        document
+            .getElementById(graph)
+            .classList
+            .remove("active");
+    }
+
+    for (const tab of tabs) {
+
+        document
+            .getElementById(tab)
+            .classList
+            .remove("active");
+    }
+
+    document
+        .getElementById(name)
+        .classList
+        .add("active");
+
+    document
+        .getElementById(
+            "tab-" + name
+        )
+        .classList
+        .add("active");
+}
+
+</script>
+
+</head>
+
+<body>
+
+<div class="header">
+
+    <div class="title">
+        LATTE Code Graph
+    </div>
+
+    <div class="subtitle">
+        Interactive software architecture
+    </div>
+
+</div>
+
+
+<div class="tabs">
+
+    <button
+        id="tab-architecture"
+        class="tab active"
+        onclick="showGraph('architecture')"
+    >
+        Architecture
+    </button>
+
+    <button
+        id="tab-dependencies"
+        class="tab"
+        onclick="showGraph('dependencies')"
+    >
+        Dependencies
+    </button>
+
+    <button
+        id="tab-calls"
+        class="tab"
+        onclick="showGraph('calls')"
+    >
+        Call Graph
+    </button>
+
+</div>
+
+
+<div
+    id="architecture"
+    class="graph-container active"
+>
+
+    <iframe
+        src="architecture.html"
+        style="
+            width:100%;
+            height:100%;
+            border:none;
+        "
+    ></iframe>
+
+</div>
+
+
+<div
+    id="dependencies"
+    class="graph-container"
+>
+
+    <iframe
+        src="dependencies.html"
+        style="
+            width:100%;
+            height:100%;
+            border:none;
+        "
+    ></iframe>
+
+</div>
+
+
+<div
+    id="calls"
+    class="graph-container"
+>
+
+    <iframe
+        src="calls.html"
+        style="
+            width:100%;
+            height:100%;
+            border:none;
+        "
+    ></iframe>
+
+</div>
+
+</body>
+
+</html>

@@ -1,0 +1,127 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        
+            <script src="lib/bindings/utils.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/dist/vis-network.min.css" integrity="sha512-WgxfT5LWjfszlPHXRmBWHkV2eceiWTOBvrKCNbdgDYTHrT2AeLCGbF4sZlZw3UMN3WtL0tGUoIAKsu8mllg/XA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js" integrity="sha512-LnvoEWDFrqGHlHmDD2101OrLcbsfkrzoSpvtSQtxK3RMnRV0eOkhhBN2dXHKRrUU8p2DGRTk35n4O8nWSVe1mQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+            
+        
+<center>
+<h1></h1>
+</center>
+
+<!-- <link rel="stylesheet" href="../node_modules/vis/dist/vis.min.css" type="text/css" />
+<script type="text/javascript" src="../node_modules/vis/dist/vis.js"> </script>-->
+        <link
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6"
+          crossorigin="anonymous"
+        />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"
+          integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf"
+          crossorigin="anonymous"
+        ></script>
+
+
+        <center>
+          <h1></h1>
+        </center>
+        <style type="text/css">
+
+             #mynetwork {
+                 width: 100%;
+                 height: 800px;
+                 background-color: #F4F6F8;
+                 border: 1px solid lightgray;
+                 position: relative;
+                 float: left;
+             }
+
+             
+
+             
+
+             
+        </style>
+    </head>
+
+
+    <body>
+        <div class="card" style="width: 100%">
+            
+            
+            <div id="mynetwork" class="card-body"></div>
+        </div>
+
+        
+        
+
+        <script type="text/javascript">
+
+              // initialize global variables.
+              var edges;
+              var nodes;
+              var allNodes;
+              var allEdges;
+              var nodeColors;
+              var originalNodes;
+              var network;
+              var container;
+              var options, data;
+              var filter = {
+                  item : '',
+                  property : '',
+                  value : []
+              };
+
+              
+
+              
+
+              // This method is responsible for drawing the graph, returns the drawn network
+              function drawGraph() {
+                  var container = document.getElementById('mynetwork');
+
+                  
+
+                  // parsing and collecting nodes and edges from the python
+                  nodes = new vis.DataSet([{"color": {"background": "#98A2B3", "border": "#98A2B3"}, "font": {"color": "#1F2933"}, "id": "src", "label": "src", "shape": "dot", "title": "\u003cb\u003esrc\\__init__.py\u003c/b\u003e\u003cbr\u003eCategory: Other"}, {"color": {"background": "#4C78A8", "border": "#4C78A8"}, "font": {"color": "#1F2933"}, "id": "src.core.cpacs_config", "label": "cpacs_config", "shape": "dot", "title": "\u003cb\u003esrc\\core\\cpacs_config.py\u003c/b\u003e\u003cbr\u003eCategory: Core"}, {"color": {"background": "#4C78A8", "border": "#4C78A8"}, "font": {"color": "#1F2933"}, "id": "src.core.explore_tigl", "label": "explore_tigl", "shape": "dot", "title": "\u003cb\u003esrc\\core\\explore_tigl.py\u003c/b\u003e\u003cbr\u003eCategory: Core"}, {"color": {"background": "#4C78A8", "border": "#4C78A8"}, "font": {"color": "#1F2933"}, "id": "src.core.inspect_cpacs", "label": "inspect_cpacs", "shape": "dot", "title": "\u003cb\u003esrc\\core\\inspect_cpacs.py\u003c/b\u003e\u003cbr\u003eCategory: Core"}, {"color": {"background": "#4C78A8", "border": "#4C78A8"}, "font": {"color": "#1F2933"}, "id": "src.core.test_cpacs", "label": "test_cpacs", "shape": "dot", "title": "\u003cb\u003esrc\\core\\test_cpacs.py\u003c/b\u003e\u003cbr\u003eCategory: Core"}, {"color": {"background": "#4C78A8", "border": "#4C78A8"}, "font": {"color": "#1F2933"}, "id": "src.core.WingGeo", "label": "WingGeo", "shape": "dot", "title": "\u003cb\u003esrc\\core\\WingGeo.py\u003c/b\u003e\u003cbr\u003eCategory: Core"}, {"color": {"background": "#4C78A8", "border": "#4C78A8"}, "font": {"color": "#1F2933"}, "id": "src.core", "label": "core", "shape": "dot", "title": "\u003cb\u003esrc\\core\\__init__.py\u003c/b\u003e\u003cbr\u003eCategory: Core"}, {"color": {"background": "#B07AA1", "border": "#B07AA1"}, "font": {"color": "#1F2933"}, "id": "src.gui.main", "label": "main", "shape": "dot", "title": "\u003cb\u003esrc\\gui\\main.py\u003c/b\u003e\u003cbr\u003eCategory: GUI"}, {"color": {"background": "#B07AA1", "border": "#B07AA1"}, "font": {"color": "#1F2933"}, "id": "src.gui.style", "label": "style", "shape": "dot", "title": "\u003cb\u003esrc\\gui\\style.py\u003c/b\u003e\u003cbr\u003eCategory: GUI"}, {"color": {"background": "#B07AA1", "border": "#B07AA1"}, "font": {"color": "#1F2933"}, "id": "src.gui", "label": "gui", "shape": "dot", "title": "\u003cb\u003esrc\\gui\\__init__.py\u003c/b\u003e\u003cbr\u003eCategory: GUI"}, {"color": {"background": "#59A14F", "border": "#59A14F"}, "font": {"color": "#1F2933"}, "id": "src.visualization.plot_wing", "label": "plot_wing", "shape": "dot", "title": "\u003cb\u003esrc\\visualization\\plot_wing.py\u003c/b\u003e\u003cbr\u003eCategory: Visualization"}, {"color": {"background": "#59A14F", "border": "#59A14F"}, "font": {"color": "#1F2933"}, "id": "src.visualization", "label": "visualization", "shape": "dot", "title": "\u003cb\u003esrc\\visualization\\__init__.py\u003c/b\u003e\u003cbr\u003eCategory: Visualization"}, {"color": {"background": "#9C755F", "border": "#9C755F"}, "font": {"color": "#1F2933"}, "id": "src.gui.analysis_window.roskam_button", "label": "roskam_button", "shape": "dot", "title": "\u003cb\u003esrc\\gui\\analysis_window\\roskam_button.py\u003c/b\u003e\u003cbr\u003eCategory: Analysis GUI"}, {"color": {"background": "#9C755F", "border": "#9C755F"}, "font": {"color": "#1F2933"}, "id": "src.gui.analysis_window.tornado_button", "label": "tornado_button", "shape": "dot", "title": "\u003cb\u003esrc\\gui\\analysis_window\\tornado_button.py\u003c/b\u003e\u003cbr\u003eCategory: Analysis GUI"}, {"color": {"background": "#9C755F", "border": "#9C755F"}, "font": {"color": "#1F2933"}, "id": "src.gui.analysis_window.window_2", "label": "window_2", "shape": "dot", "title": "\u003cb\u003esrc\\gui\\analysis_window\\window_2.py\u003c/b\u003e\u003cbr\u003eCategory: Analysis GUI"}, {"color": {"background": "#9C755F", "border": "#9C755F"}, "font": {"color": "#1F2933"}, "id": "src.gui.analysis_window", "label": "analysis_window", "shape": "dot", "title": "\u003cb\u003esrc\\gui\\analysis_window\\__init__.py\u003c/b\u003e\u003cbr\u003eCategory: Analysis GUI"}, {"color": {"background": "#E15759", "border": "#E15759"}, "font": {"color": "#1F2933"}, "id": "src.gui.main_window.analysis_button", "label": "analysis_button", "shape": "dot", "title": "\u003cb\u003esrc\\gui\\main_window\\analysis_button.py\u003c/b\u003e\u003cbr\u003eCategory: Main Window"}, {"color": {"background": "#E15759", "border": "#E15759"}, "font": {"color": "#1F2933"}, "id": "src.gui.main_window.control_surface_button", "label": "control_surface_button", "shape": "dot", "title": "\u003cb\u003esrc\\gui\\main_window\\control_surface_button.py\u003c/b\u003e\u003cbr\u003eCategory: Main Window"}, {"color": {"background": "#E15759", "border": "#E15759"}, "font": {"color": "#1F2933"}, "id": "src.gui.main_window.cpacs_selector", "label": "cpacs_selector", "shape": "dot", "title": "\u003cb\u003esrc\\gui\\main_window\\cpacs_selector.py\u003c/b\u003e\u003cbr\u003eCategory: Main Window"}, {"color": {"background": "#E15759", "border": "#E15759"}, "font": {"color": "#1F2933"}, "id": "src.gui.main_window.geometry_button", "label": "geometry_button", "shape": "dot", "title": "\u003cb\u003esrc\\gui\\main_window\\geometry_button.py\u003c/b\u003e\u003cbr\u003eCategory: Main Window"}, {"color": {"background": "#E15759", "border": "#E15759"}, "font": {"color": "#1F2933"}, "id": "src.gui.main_window.window_1", "label": "window_1", "shape": "dot", "title": "\u003cb\u003esrc\\gui\\main_window\\window_1.py\u003c/b\u003e\u003cbr\u003eCategory: Main Window"}, {"color": {"background": "#E15759", "border": "#E15759"}, "font": {"color": "#1F2933"}, "id": "src.gui.main_window", "label": "main_window", "shape": "dot", "title": "\u003cb\u003esrc\\gui\\main_window\\__init__.py\u003c/b\u003e\u003cbr\u003eCategory: Main Window"}]);
+                  edges = new vis.DataSet([{"arrows": "to", "from": "src.core.inspect_cpacs", "to": "src.core.cpacs_config"}, {"arrows": "to", "from": "src.gui.main", "to": "src.gui.main_window.window_1"}, {"arrows": "to", "from": "src.visualization.plot_wing", "to": "src.core.WingGeo"}, {"arrows": "to", "from": "src.gui.analysis_window.roskam_button", "to": "src.gui.style"}, {"arrows": "to", "from": "src.gui.analysis_window.tornado_button", "to": "src.gui.style"}, {"arrows": "to", "from": "src.gui.analysis_window.window_2", "to": "src.gui.style"}, {"arrows": "to", "from": "src.gui.main_window.analysis_button", "to": "src.gui.analysis_window.window_2"}, {"arrows": "to", "from": "src.gui.main_window.analysis_button", "to": "src.gui.style"}, {"arrows": "to", "from": "src.gui.main_window.control_surface_button", "to": "src.gui.style"}, {"arrows": "to", "from": "src.gui.main_window.cpacs_selector", "to": "src.core.WingGeo"}, {"arrows": "to", "from": "src.gui.main_window.cpacs_selector", "to": "src.core.cpacs_config"}, {"arrows": "to", "from": "src.gui.main_window.cpacs_selector", "to": "src.gui.style"}, {"arrows": "to", "from": "src.gui.main_window.geometry_button", "to": "src.visualization.plot_wing"}, {"arrows": "to", "from": "src.gui.main_window.geometry_button", "to": "src.gui.style"}, {"arrows": "to", "from": "src.gui.main_window.window_1", "to": "src.gui.style"}]);
+
+                  nodeColors = {};
+                  allNodes = nodes.get({ returnType: "Object" });
+                  for (nodeId in allNodes) {
+                    nodeColors[nodeId] = allNodes[nodeId].color;
+                  }
+                  allEdges = edges.get({ returnType: "Object" });
+                  // adding nodes and edges to the graph
+                  data = {nodes: nodes, edges: edges};
+
+                  var options = {"nodes": {"shape": "box", "margin": 12, "borderWidth": 1, "shadow": {"enabled": true, "size": 5, "x": 2, "y": 2}, "font": {"face": "SegoeUI", "size": 14}}, "edges": {"width": 1, "color": {"color": "#98A2B3", "highlight": "#344054", "hover": "#667085"}, "arrows": {"to": {"enabled": true, "scaleFactor": 0.6}}, "smooth": {"enabled": true, "type": "dynamic"}}, "physics": {"enabled": true, "forceAtlas2Based": {"gravitationalConstant": -100, "centralGravity": 0.015, "springLength": 170, "springConstant": 0.05, "damping": 0.4}, "solver": "forceAtlas2Based", "stabilization": {"enabled": true, "iterations": 800, "fit": true}}, "interaction": {"hover": true, "navigationButtons": true, "keyboard": true, "dragNodes": true, "zoomView": true}};
+
+                  
+
+
+                  
+
+                  network = new vis.Network(container, data, options);
+
+                  
+
+                  
+
+                  
+
+
+                  
+
+                  return network;
+
+              }
+              drawGraph();
+        </script>
+    </body>
+</html>
