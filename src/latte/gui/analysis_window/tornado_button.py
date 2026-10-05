@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 
-from src.gui.style import (
+from latte.gui.style import (
     CARD_BACKGROUND,
     TEXT,
     PRIMARY,

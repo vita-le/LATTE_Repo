@@ -3,7 +3,7 @@ import tkinter as tk
 from .roskam_button import RoskamButton
 from .tornado_button import TornadoButton
 
-from src.gui.style import (
+from latte.gui.style import (
     BACKGROUND,
     CARD_BACKGROUND,
     TEXT,

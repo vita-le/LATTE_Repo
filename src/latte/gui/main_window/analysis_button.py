@@ -1,8 +1,8 @@
 import tkinter as tk
 
-from src.gui.analysis_window.window_2 import AnalysisWindow
+from latte.gui.analysis_window.window_2 import AnalysisWindow
 
-from src.gui.style import (
+from latte.gui.style import (
     CARD_BACKGROUND,
     TEXT,
     FONT_BUTTON,

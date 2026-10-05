@@ -4,3 +4,8 @@ __pycache__/
 .vscode/
 __pycache__/
 *.py[cod]
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/

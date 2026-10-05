@@ -5,7 +5,7 @@ from .geometry_button import GeometryButton
 from .control_surface_button import ControlSurfaceButton
 from .analysis_button import AnalysisButton
 
-from src.gui.style import (
+from latte.gui.style import (
     BACKGROUND,
     CARD_BACKGROUND,
     TEXT,

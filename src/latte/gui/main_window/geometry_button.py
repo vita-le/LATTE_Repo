@@ -1,9 +1,9 @@
 import tkinter as tk
 from tkinter import messagebox
 
-from src.visualization.plot_wing import plot_wing_geometry
+from latte.visualization.plot_wing import plot_wing_geometry
 
-from src.gui.style import (
+from latte.gui.style import (
     CARD_BACKGROUND,
     PRIMARY,
     PRIMARY_HOVER,

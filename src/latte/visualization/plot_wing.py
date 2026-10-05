@@ -3,7 +3,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-from src.core.WingGeo import (
+from latte.core.wing_geo import (
     DEFAULT_CPACS,
     open_cpacs,
     extract_all_wings,

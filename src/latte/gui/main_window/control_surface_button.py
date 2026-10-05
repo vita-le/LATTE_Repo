@@ -1,22 +1,22 @@
 import tkinter as tk
 from tkinter import messagebox
 
-from src.core.WingGeo import (
+from latte.core.wing_geo import (
     open_cpacs,
     extract_all_wings,
 )
 
-from src.core.aileron import (
+from latte.core.aileron import (
     extract_ailerons,
     extract_aileron_geometry,
 )
 
-from src.visualization.plot_control_surface import (
+from latte.visualization.plot_control_surface import (
     plot_wing_with_ailerons,
     plot_ailerons_top_view,
 )
 
-from src.gui.style import (
+from latte.gui.style import (
     CARD_BACKGROUND,
     TEXT,
     FONT_BUTTON,

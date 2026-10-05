@@ -2,10 +2,10 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from pathlib import Path
 
-from src.core.WingGeo import open_cpacs
-from src.core.cpacs_config import get_cpacs_configurations
+from latte.core.wing_geo import open_cpacs
+from latte.core.cpacs_config import get_cpacs_configurations
 
-from src.gui.style import (
+from latte.gui.style import (
     CARD_BACKGROUND,
     TEXT,
     SECONDARY_TEXT,
