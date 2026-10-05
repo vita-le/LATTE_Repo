@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cpacs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="cpacs_schema.xsd">
+	<header>
+		<name>Minimal Wing and Aileron Test Model</name>
+		<creator>Andrea Vitale</creator>
+		<timestamp>2026-09-25T22:17:00</timestamp>
+		<version>1.0</version>
+		<cpacsVersion>3.2</cpacsVersion>
+	</header>
+	<profiles>
+		<wingAirfoils>
+			<wingAirfoil uID="NACA0012">
+				<name>NACA 0012</name>
+				<description>Profilo simmetrico per test TiGL 3.5</description>
+				<pointList>
+					<x mapType="vector">1.0;0.95;0.9;0.8;0.7;0.6;0.5;0.4;0.3;0.2;0.1;0.05;0.0;0.05;0.1;0.2;0.3;0.4;0.5;0.6;0.7;0.8;0.9;0.95;1.0</x>
+					<y mapType="vector">0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0;0.0</y>
+					<z mapType="vector">0.0012;0.0075;0.0142;0.0262;0.0363;0.0446;0.0504;0.0536;0.0531;0.0468;0.0337;0.0242;0.0;-0.0242;-0.0337;-0.0468;-0.0531;-0.0536;-0.0504;-0.0446;-0.0363;-0.0262;-0.0142;-0.0075;-0.0012</z>
+				</pointList>
+			</wingAirfoil>
+		</wingAirfoils>
+	</profiles>
+	<vehicles>
+		<aircraft>
+			<model uID="AircraftModel">
+				<name>Test Aircraft Model</name>
+				<wings>
+					<wing uID="Wing1" symmetry="x-z-plane">
+						<name>Main Wing</name>
+						<transformation uID="Wing1_trans">
+							<scaling uID="Wing1_scale">
+								<x>1.0</x>
+								<y>1.0</y>
+								<z>1.0</z>
+							</scaling>
+							<rotation uID="Wing1_rot">
+								<x>0.0</x>
+								<y>0.0</y>
+								<z>0.0</z>
+							</rotation>
+							<translation refType="absGlobal" uID="Wing1_trans_val">
+								<x>0.0</x>
+								<y>0.0</y>
+								<z>0.0</z>
+							</translation>
+						</transformation>
+						<sections>
+							<section uID="Wing1_Sec1">
+								<name>Root Section</name>
+								<transformation uID="Wing1_Sec1_trans">
+									<scaling uID="Wing1_Sec1_scale">
+										<x>2.0</x>
+										<y>2.0</y>
+										<z>2.0</z>
+									</scaling>
+									<rotation uID="Wing1_Sec1_rot">
+										<x>0.0</x>
+										<y>0.0</y>
+										<z>0.0</z>
+									</rotation>
+									<translation refType="absLocal" uID="Wing1_Sec1_trans_val">
+										<x>0.0</x>
+										<y>0.0</y>
+										<z>0.0</z>
+									</translation>
+								</transformation>
+								<elements>
+									<element uID="Wing1_Sec1_Elem1">
+										<name>Root Element</name>
+										<airfoilUID>NACA0012</airfoilUID>
+										<transformation uID="Wing1_Sec1_Elem1_trans">
+											<scaling uID="Wing1_Sec1_Elem1_scale">
+												<x>1.0</x>
+												<y>1.0</y>
+												<z>1.0</z>
+											</scaling>
+											<rotation uID="Wing1_Sec1_Elem1_rot">
+												<x>0.0</x>
+												<y>0.0</y>
+												<z>0.0</z>
+											</rotation>
+											<translation refType="absLocal" uID="Wing1_Sec1_Elem1_trans_val">
+												<x>0.0</x>
+												<y>0.0</y>
+												<z>0.0</z>
+											</translation>
+										</transformation>
+									</element>
+								</elements>
+							</section>
+							<section uID="Wing1_Sec2">
+								<name>Tip Section</name>
+								<transformation uID="Wing1_Sec2_trans">
+									<scaling uID="Wing1_Sec2_scale">
+										<x>1.0</x>
+										<y>1.0</y>
+										<z>1.0</z>
+									</scaling>
+									<rotation uID="Wing1_Sec2_rot">
+										<x>0.0</x>
+										<y>0.0</y>
+										<z>0.0</z>
+									</rotation>
+									<translation refType="absLocal" uID="Wing1_Sec2_trans_val">
+										<x>0.0</x>
+										<y>0.0</y>
+										<z>0.0</z>
+									</translation>
+								</transformation>
+								<elements>
+									<element uID="Wing1_Sec2_Elem1">
+										<name>Tip Element</name>
+										<airfoilUID>NACA0012</airfoilUID>
+										<transformation uID="Wing1_Sec2_Elem1_trans">
+											<scaling uID="Wing1_Sec2_Elem1_scale">
+												<x>1.0</x>
+												<y>1.0</y>
+												<z>1.0</z>
+											</scaling>
+											<rotation uID="Wing1_Sec2_Elem1_rot">
+												<x>0.0</x>
+												<y>0.0</y>
+												<z>0.0</z>
+											</rotation>
+											<translation refType="absLocal" uID="Wing1_Sec2_Elem1_trans_val">
+												<x>0.0</x>
+												<y>0.0</y>
+												<z>0.0</z>
+											</translation>
+										</transformation>
+									</element>
+								</elements>
+							</section>
+						</sections>
+						<positionings>
+							<positioning uID="Wing1_Pos1">
+								<name>Root Positioning</name>
+								<length>0.0</length>
+								<sweepAngle>0.0</sweepAngle>
+								<dihedralAngle>0.0</dihedralAngle>
+								<toSectionUID>Wing1_Sec1</toSectionUID>
+							</positioning>
+							<positioning uID="Wing1_Pos2">
+								<name>Tip Positioning</name>
+								<length>10.0</length>
+								<sweepAngle>15.0</sweepAngle>
+								<dihedralAngle>2.0</dihedralAngle>
+								<fromSectionUID>Wing1_Sec1</fromSectionUID>
+								<toSectionUID>Wing1_Sec2</toSectionUID>
+							</positioning>
+						</positionings>
+						<segments>
+							<segment uID="Wing1_Seg1">
+								<name>Main Wing Segment</name>
+								<fromElementUID>Wing1_Sec1_Elem1</fromElementUID>
+								<toElementUID>Wing1_Sec2_Elem1</toElementUID>
+							</segment>
+						</segments>
+						<componentSegments>
+							<componentSegment uID="Wing1_CompSeg1">
+								<name>Main Wing Component Segment</name>
+								<fromElementUID>Wing1_Sec1_Elem1</fromElementUID>
+								<toElementUID>Wing1_Sec2_Elem1</toElementUID>
+								<controlSurfaces>
+									<trailingEdgeDevices>
+										<trailingEdgeDevice uID="Aileron1">
+											<name>Aileron</name>
+											<description>Outboard Aileron Control Surface</description>
+											<parentComponentSegmentUID>Wing1_CompSeg1</parentComponentSegmentUID>
+											<outerShape>
+												<innerBorder>
+													<etaPoint>0.65</etaPoint>
+													<xsiPoint>0.75</xsiPoint>
+												</innerBorder>
+												<outerBorder>
+													<etaPoint>0.95</etaPoint>
+													<xsiPoint>0.75</xsiPoint>
+												</outerBorder>
+											</outerShape>
+											<path>
+												<innerHingePoint>
+													<etaXsi>
+														<eta>0.65</eta>
+														<xsi>0.75</xsi>
+													</etaXsi>
+													<hingeXic>0.0</hingeXic>
+												</innerHingePoint>
+												<outerHingePoint>
+													<etaXsi>
+														<eta>0.95</eta>
+														<xsi>0.75</xsi>
+													</etaXsi>
+													<hingeXic>0.0</hingeXic>
+												</outerHingePoint>
+												<steps>
+													<step>
+														<relDeflection>-20.0</relDeflection>
+													</step>
+													<step>
+														<relDeflection>0.0</relDeflection>
+													</step>
+													<step>
+														<relDeflection>20.0</relDeflection>
+													</step>
+												</steps>
+											</path>
+										</trailingEdgeDevice>
+									</trailingEdgeDevices>
+								</controlSurfaces>
+							</componentSegment>
+						</componentSegments>
+					</wing>
+				</wings>
+				<configurations>
+					<configuration uID="Config1">
+						<name>Default Configuration</name>
+						<description>Minimal active configuration</description>
+						<useWings>
+							<wingUID>Wing1</wingUID>
+						</useWings>
+					</configuration>
+				</configurations>
+			</model>
+		</aircraft>
+	</vehicles>
+</cpacs>
