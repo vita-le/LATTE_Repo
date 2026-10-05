@@ -2,7 +2,10 @@ from pathlib import Path
 
 from tigl3 import tigl3wrapper
 from tixi3 import tixi3wrapper
+import logging
+import xml.etree.ElementTree as ET
 
+logger = logging.getLogger(__name__)
 
 DEFAULT_CPACS = "examples/GripenECPACS.xml"
 N_STATIONS = 10
@@ -21,19 +24,37 @@ def distance(p1, p2):
     return sum((a - b) ** 2 for a, b in zip(p1, p2)) ** 0.5
 
 
+def list_configurations(filename):
+    """Return the uID of every aircraft/rotorcraft model in a CPACS file."""
+    root = ET.parse(str(filename)).getroot()
+    uids = []
+    for kind in ("aircraft", "rotorcraft"):
+        for model in root.findall(f"./vehicles/{kind}/model"):
+            uid = model.get("uID")
+            if uid:
+                uids.append(uid)
+    return uids
+
+
 def open_cpacs(filename, configuration=None):
-    """Open a CPACS file with TiXI and TiGL."""
+    """Open a CPACS file with TiXI and TiGL; returns (tigl, tixi)."""
+    if configuration is None:
+        configs = list_configurations(filename)
+        if len(configs) > 1:
+            logger.warning("Several configurations in %s: %s. Using %r",
+                           filename, configs, configs[0])
+        # An empty string lets TiGL choose when there is only one model
+        configuration = configs[0] if configs else ""
 
     tixi = tixi3wrapper.Tixi3()
     tixi.open(str(filename))
-
     tigl = tigl3wrapper.Tigl3()
-
-    if configuration is None:
-        tigl.open(tixi, "")
-    else:
+    try:
         tigl.open(tixi, configuration)
-
+    except Exception:
+        # Do not leave the TiXI handle open if TiGL fails
+        tixi.close()
+        raise
     return tigl, tixi
 
 def extract_wing(tigl, wing_uid, n=N_STATIONS):
