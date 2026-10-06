@@ -1,15 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox
 
-from latte.core.wing_geo import (
-    open_cpacs,
-    extract_all_wings,
-)
-
-from latte.core.aileron import (
-    extract_ailerons,
-    extract_aileron_geometry,
-)
+from latte.core.cpacs_document import CPACSDocument
+from latte.core.errors import InvalidCPACSError
 
 from latte.visualization.plot_control_surface import (
     plot_wing_with_ailerons,
@@ -108,7 +101,7 @@ class ControlSurfaceButton:
     # =========================================================
     # Run
     # =========================================================
-
+    
     def run(self):
 
         cpacs_file, configuration = self.get_cpacs()
@@ -116,87 +109,33 @@ class ControlSurfaceButton:
         if cpacs_file is None:
             return
 
-        tigl = None
-        tixi = None
-
         try:
+            # The document closes TiGL/TiXI automatically at the end of the block
+            with CPACSDocument(cpacs_file, configuration) as doc:
+
+                wings = doc.wings
+                ailerons = doc.ailerons
+
+                if not ailerons:
+                    messagebox.showinfo(
+                        "Control Surfaces",
+                        (
+                            "No ailerons were found in the "
+                            "selected CPACS configuration."
+                        ),
+                    )
+                    return
+
+                wing = self.find_wing_for_ailerons(wings, ailerons)
+
+                # Plain dictionaries: safe to use after the document is closed
+                ailerons_geometry = [
+                    doc.aileron_geometry(aileron)
+                    for aileron in ailerons
+                ]
 
             # -------------------------------------------------
-            # Open CPACS
-            # -------------------------------------------------
-
-            tigl, tixi = open_cpacs(
-                cpacs_file,
-                configuration,
-            )
-
-            # -------------------------------------------------
-            # Extract wings
-            # -------------------------------------------------
-
-            wings = extract_all_wings(
-                tigl
-            )
-
-            # -------------------------------------------------
-            # Extract ailerons
-            # -------------------------------------------------
-
-            ailerons = extract_ailerons(
-                tigl,
-                cpacs_file,
-            )
-
-            if not ailerons:
-
-                messagebox.showinfo(
-                    "Control Surfaces",
-                    (
-                        "No ailerons were found in the "
-                        "selected CPACS configuration."
-                    ),
-                )
-
-                return
-
-            # -------------------------------------------------
-            # Find associated wing
-            # -------------------------------------------------
-
-            wing = self.find_wing_for_ailerons(
-                wings,
-                ailerons,
-            )
-
-            # -------------------------------------------------
-            # Extract aileron geometry
-            # -------------------------------------------------
-
-            ailerons_geometry = []
-
-            for aileron in ailerons:
-
-                geometry = extract_aileron_geometry(
-                    tigl,
-                    aileron,
-                )
-
-                ailerons_geometry.append(
-                    geometry
-                )
-
-            # -------------------------------------------------
-            # Close CPACS before plotting
-            # -------------------------------------------------
-
-            tigl.close()
-            tixi.close()
-
-            tigl = None
-            tixi = None
-
-            # -------------------------------------------------
-            # 3D plot
+            # 3D plot (CPACS already closed)
             # -------------------------------------------------
 
             plot_wing_with_ailerons(
@@ -215,8 +154,11 @@ class ControlSurfaceButton:
                 configuration,
             )
 
-        except Exception as error:
+        except InvalidCPACSError as error:
+            # Readable message listing the exact problems
+            messagebox.showerror("Invalid CPACS file", str(error))
 
+        except Exception as error:
             messagebox.showerror(
                 "Control Surface Error",
                 (
@@ -225,23 +167,3 @@ class ControlSurfaceButton:
                     f"{type(error).__name__}: {error}"
                 ),
             )
-
-        finally:
-
-            # -------------------------------------------------
-            # Safety cleanup
-            # -------------------------------------------------
-
-            if tigl is not None:
-
-                try:
-                    tigl.close()
-                except Exception:
-                    pass
-
-            if tixi is not None:
-
-                try:
-                    tixi.close()
-                except Exception:
-                    pass
