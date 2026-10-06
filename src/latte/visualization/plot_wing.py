@@ -3,12 +3,6 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 
-from latte.core.wing_geo import (
-    DEFAULT_CPACS,
-    open_cpacs,
-    extract_all_wings,
-)
-
 
 def set_axes_equal(ax):
     """
@@ -55,162 +49,148 @@ def set_axes_equal(ax):
     )
 
 
-def plot_wing_geometry(cpacs_file, configuration):
+def plot_wing_geometry(wings, configuration):
     """
-    Plot all wing geometries contained in a CPACS configuration.
-    """
+    Plot all wing geometries.
 
-    tigl, tixi = open_cpacs(
-        cpacs_file,
-        configuration,
+    wings: list of wing dictionaries (see CPACSDocument.wings).
+    """
+    fig = plt.figure(
+        figsize=(12, 8)
     )
 
-    try:
+    ax = fig.add_subplot(
+        111,
+        projection="3d",
+    )
 
-        wings = extract_all_wings(tigl)
+    for wing in wings:
 
-        fig = plt.figure(
-            figsize=(12, 8)
-        )
+        wing_uid = wing["uid"]
 
-        ax = fig.add_subplot(
-            111,
-            projection="3d",
-        )
+        for segment in wing["segments"]:
 
-        for wing in wings:
+            stations = segment["stations"]
 
-            wing_uid = wing["uid"]
+            # -------------------------------------------------
+            # Leading edge
+            # -------------------------------------------------
 
-            for segment in wing["segments"]:
+            le_x = [
+                s["leading_edge"][0]
+                for s in stations
+            ]
 
-                stations = segment["stations"]
+            le_y = [
+                s["leading_edge"][1]
+                for s in stations
+            ]
 
-                # -------------------------------------------------
-                # Leading edge
-                # -------------------------------------------------
+            le_z = [
+                s["leading_edge"][2]
+                for s in stations
+            ]
 
-                le_x = [
-                    s["leading_edge"][0]
-                    for s in stations
-                ]
+            # -------------------------------------------------
+            # Trailing edge
+            # -------------------------------------------------
 
-                le_y = [
-                    s["leading_edge"][1]
-                    for s in stations
-                ]
+            te_x = [
+                s["trailing_edge"][0]
+                for s in stations
+            ]
 
-                le_z = [
-                    s["leading_edge"][2]
-                    for s in stations
-                ]
+            te_y = [
+                s["trailing_edge"][1]
+                for s in stations
+            ]
 
-                # -------------------------------------------------
-                # Trailing edge
-                # -------------------------------------------------
+            te_z = [
+                s["trailing_edge"][2]
+                for s in stations
+            ]
 
-                te_x = [
-                    s["trailing_edge"][0]
-                    for s in stations
-                ]
+            # -------------------------------------------------
+            # Plot leading edge
+            # -------------------------------------------------
 
-                te_y = [
-                    s["trailing_edge"][1]
-                    for s in stations
-                ]
+            ax.plot(
+                le_x,
+                le_y,
+                le_z,
+                marker="o",
+                linewidth=2,
+                label=f"{wing_uid} LE",
+            )
 
-                te_z = [
-                    s["trailing_edge"][2]
-                    for s in stations
-                ]
+            # -------------------------------------------------
+            # Plot trailing edge
+            # -------------------------------------------------
 
-                # -------------------------------------------------
-                # Plot leading edge
-                # -------------------------------------------------
+            ax.plot(
+                te_x,
+                te_y,
+                te_z,
+                marker="o",
+                linewidth=2,
+                label=f"{wing_uid} TE",
+            )
+
+            # -------------------------------------------------
+            # Chord lines
+            # -------------------------------------------------
+
+            for station in stations:
+
+                le = station["leading_edge"]
+                te = station["trailing_edge"]
 
                 ax.plot(
-                    le_x,
-                    le_y,
-                    le_z,
-                    marker="o",
-                    linewidth=2,
-                    label=f"{wing_uid} LE",
+                    [le[0], te[0]],
+                    [le[1], te[1]],
+                    [le[2], te[2]],
+                    linewidth=1,
+                    alpha=0.5,
                 )
 
-                # -------------------------------------------------
-                # Plot trailing edge
-                # -------------------------------------------------
+    # ---------------------------------------------------------
+    # Axis labels
+    # ---------------------------------------------------------
 
-                ax.plot(
-                    te_x,
-                    te_y,
-                    te_z,
-                    marker="o",
-                    linewidth=2,
-                    label=f"{wing_uid} TE",
-                )
+    ax.set_xlabel("X [m]")
+    ax.set_ylabel("Y [m]")
+    ax.set_zlabel("Z [m]")
 
-                # -------------------------------------------------
-                # Chord lines
-                # -------------------------------------------------
+    ax.set_title(
+        f"CPACS Aircraft Geometry - {configuration}"
+    )
 
-                for station in stations:
+    # ---------------------------------------------------------
+    # Equal physical scale
+    # ---------------------------------------------------------
 
-                    le = station["leading_edge"]
-                    te = station["trailing_edge"]
+    set_axes_equal(ax)
 
-                    ax.plot(
-                        [le[0], te[0]],
-                        [le[1], te[1]],
-                        [le[2], te[2]],
-                        linewidth=1,
-                        alpha=0.5,
-                    )
+    # ---------------------------------------------------------
+    # Grid
+    # ---------------------------------------------------------
 
-        # ---------------------------------------------------------
-        # Axis labels
-        # ---------------------------------------------------------
+    ax.grid(True)
 
-        ax.set_xlabel("X [m]")
-        ax.set_ylabel("Y [m]")
-        ax.set_zlabel("Z [m]")
+    # ---------------------------------------------------------
+    # View
+    # ---------------------------------------------------------
 
-        ax.set_title(
-            f"CPACS Aircraft Geometry - {configuration}"
-        )
+    ax.view_init(
+        elev=20,
+        azim=-60,
+    )
 
-        # ---------------------------------------------------------
-        # Equal physical scale
-        # ---------------------------------------------------------
+    ax.legend()
 
-        set_axes_equal(ax)
+    plt.tight_layout()
 
-        # ---------------------------------------------------------
-        # Grid
-        # ---------------------------------------------------------
-
-        ax.grid(True)
-
-        # ---------------------------------------------------------
-        # View
-        # ---------------------------------------------------------
-
-        ax.view_init(
-            elev=20,
-            azim=-60,
-        )
-
-        ax.legend()
-
-        plt.tight_layout()
-
-        plt.show()
-
-    finally:
-
-        tigl.close()
-        tixi.close()
-
+    plt.show()
 
 def main():
 
@@ -247,11 +227,12 @@ def main():
             "when running plot_wing.py directly."
         )
 
-    plot_wing_geometry(
-        cpacs,
-        configuration,
-    )
+    from latte.core.cpacs_document import CPACSDocument
 
+    with CPACSDocument(cpacs, configuration) as doc:
+        wings = doc.wings
+
+    plot_wing_geometry(wings, configuration)
 
 if __name__ == "__main__":
     main()

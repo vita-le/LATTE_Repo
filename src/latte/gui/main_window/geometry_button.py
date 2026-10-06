@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import messagebox
 
 from latte.visualization.plot_wing import plot_wing_geometry
+from latte.core.cpacs_document import CPACSDocument
+from latte.core.errors import InvalidCPACSError
 
 from latte.gui.style import (
     CARD_BACKGROUND,
@@ -50,7 +52,7 @@ class GeometryButton:
         self.button.config(
             state="normal"
         )
-
+        
     def run(self):
 
         cpacs_file, configuration = self.get_cpacs()
@@ -59,18 +61,22 @@ class GeometryButton:
             return
 
         try:
+            # The document closes TiGL/TiXI automatically at the end of the block
+            with CPACSDocument(cpacs_file, configuration) as doc:
+                wings = doc.wings  # plain dictionaries, safe after closing
 
-            plot_wing_geometry(
-                cpacs_file,
-                configuration,
-            )
+            # Plot after the CPACS is closed
+            plot_wing_geometry(wings, configuration)
+
+        except InvalidCPACSError as error:
+            # Readable message listing the exact problems
+            messagebox.showerror("Invalid CPACS file", str(error))
 
         except Exception as error:
-
             messagebox.showerror(
                 "Visualization Error",
                 (
                     "Unable to generate the 3D geometry.\n\n"
-                    f"{error}"
+                    f"{type(error).__name__}: {error}"
                 ),
             )
