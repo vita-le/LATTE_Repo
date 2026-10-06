@@ -2,7 +2,8 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from pathlib import Path
 
-from latte.core.wing_geo import open_cpacs
+from latte.core.cpacs_document import CPACSDocument
+from latte.core.errors import InvalidCPACSError
 from latte.core.cpacs_config import get_cpacs_configurations
 
 from latte.gui.style import (
@@ -281,27 +282,23 @@ class CPACSSelector:
             )
 
         # -----------------------------------------------------
-        # Validate with TiGL
+        # Validate with CPACSDocument
         # -----------------------------------------------------
 
         try:
-
-            tigl, tixi = open_cpacs(
+            # Opening the document validates the file and closes it again
+            with CPACSDocument(
                 cpacs_file,
                 self.selected_configuration,
-            )
+            ) as doc:
+                doc.wings  # forces TiGL to build the wing geometry
 
-            try:
-
-                tigl.getWingCount()
-
-            finally:
-
-                tigl.close()
-                tixi.close()
+        except InvalidCPACSError as error:
+            # Readable message: lists the exact problems found
+            messagebox.showerror("Invalid CPACS file", str(error))
+            return
 
         except Exception as error:
-
             messagebox.showerror(
                 "CPACS Error",
                 (
@@ -310,7 +307,6 @@ class CPACSSelector:
                     f"{error}"
                 ),
             )
-
             return
 
         # -----------------------------------------------------
