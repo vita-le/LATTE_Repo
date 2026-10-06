@@ -2,6 +2,7 @@ import tkinter as tk
 
 from .roskam_button import RoskamButton
 from .tornado_button import TornadoButton
+from .flight_panel import FlightConditionPanel
 
 from latte.gui.style import (
     BACKGROUND,
@@ -146,6 +147,14 @@ class AnalysisWindow:
             fill="x",
             padx=20,
             pady=(0, 15),
+        )
+       
+        self.flight_panel = FlightConditionPanel(self.window)
+
+        self.flight_panel.pack(
+            fill="x",
+            padx=35,
+            pady=10,
         )
 
         analysis_section = tk.Frame(

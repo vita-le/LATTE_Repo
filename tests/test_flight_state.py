@@ -9,6 +9,8 @@ from latte.core.flight_state import (
     isa_atmosphere,
     reynolds_number,
     true_airspeed,
+    build_conditions,
+    range_values,
 )
 
 
@@ -74,3 +76,36 @@ def test_flow_summary_keys():
     cond = FlightCondition(mach=0.3, altitude_m=0.0, alpha_deg=0.0)
     assert "reynolds" not in flow_summary(cond)
     assert "reynolds" in flow_summary(cond, length_m=1.5)
+
+def test_range_values():
+    assert range_values(0.0, 1.0, 5) == pytest.approx([0.0, 0.25, 0.5, 0.75, 1.0])
+    assert range_values(2.0, 9.0, 1) == [2.0]
+
+
+def test_range_values_invalid_n():
+    with pytest.raises(ValueError):
+        range_values(0.0, 1.0, 0)
+
+
+def test_build_single_condition():
+    conds = build_conditions(0.3, 1000.0, 2.0)
+    assert len(conds) == 1
+    assert conds[0].mach == 0.3
+
+
+def test_build_loop_conditions():
+    conds = build_conditions((0.2, 0.4, 3), (0.0, 5000.0, 2), 0.0)
+    assert len(conds) == 3 * 2 * 1
+    assert conds[0].mach == pytest.approx(0.2)
+    assert conds[-1].altitude_m == pytest.approx(5000.0)
+
+
+def test_build_conditions_too_many():
+    with pytest.raises(ValueError):
+        build_conditions((0.1, 0.9, 100), (0.0, 10000.0, 100), 0.0)
+
+
+def test_build_conditions_invalid_value_propagates():
+    # A Mach of 0 inside the range must be rejected
+    with pytest.raises(ValueError):
+        build_conditions((0.0, 0.4, 3), 0.0, 0.0)

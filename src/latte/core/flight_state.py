@@ -1,11 +1,13 @@
 # src/latte/core/flight_state.py
 """Flight condition, ISA atmosphere and derived flow quantities."""
 import math
+import itertools
 from dataclasses import dataclass
 
 # ISA formulas below are valid up to 20 km (isothermal layer 11-20 km)
 MAX_ALTITUDE_M = 20000.0
 MIN_ALTITUDE_M = -1000.0
+MAX_CONDITIONS = 5000  # guard against accidental huge loops
 
 
 @dataclass(frozen=True)
@@ -81,3 +83,45 @@ def flow_summary(cond: FlightCondition, length_m: float | None = None) -> dict[s
     if length_m is not None:
         summary["reynolds"] = reynolds_number(cond, length_m)
     return summary
+
+    MAX_CONDITIONS = 5000  # guard against accidental huge loops
+
+
+def range_values(start: float, stop: float, n: int) -> list[float]:
+    """n evenly spaced values from start to stop (both included)."""
+    if n < 1:
+        raise ValueError("Number of points must be at least 1")
+    if n == 1:
+        return [start]
+    step = (stop - start) / (n - 1)
+    return [start + i * step for i in range(n)]
+
+
+def _as_values(spec) -> list[float]:
+    """A plain number gives one value; a (start, stop, n) tuple gives a range."""
+    if isinstance(spec, (tuple, list)):
+        start, stop, n = spec
+        return range_values(float(start), float(stop), int(n))
+    return [float(spec)]
+
+
+def build_conditions(mach, altitude_m, alpha_deg, beta_deg: float = 0.0) -> list[FlightCondition]:
+    """Cartesian product of the given values.
+
+    Each of mach, altitude_m, alpha_deg is either a number (single value)
+    or a (start, stop, n) tuple (loop). A list of length 1 is a single condition.
+    """
+    machs = _as_values(mach)
+    alts = _as_values(altitude_m)
+    alphas = _as_values(alpha_deg)
+
+    total = len(machs) * len(alts) * len(alphas)
+    if total > MAX_CONDITIONS:
+        raise ValueError(
+            f"{total} conditions requested, the maximum is {MAX_CONDITIONS}"
+        )
+
+    return [
+        FlightCondition(m, h, a, beta_deg)
+        for m, h, a in itertools.product(machs, alts, alphas)
+    ]
