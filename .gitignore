@@ -9,3 +9,10 @@ __pycache__/
 *.egg-info/
 build/
 dist/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+scripts/explore_output.txt

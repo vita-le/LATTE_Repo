@@ -13,3 +13,6 @@ latte = "latte.gui.main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+latte = ["analysis/roskam/data/*.csv"]
