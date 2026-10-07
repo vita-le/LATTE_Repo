@@ -16,6 +16,7 @@ class FlightCondition:
     altitude_m: float
     alpha_deg: float
     beta_deg: float = 0.0
+    delta_deg: float = 0.0   # control-surface (aileron) deflection
 
     def __post_init__(self):
         # Fail early on invalid input instead of deep inside a solver
@@ -105,23 +106,30 @@ def _as_values(spec) -> list[float]:
     return [float(spec)]
 
 
-def build_conditions(mach, altitude_m, alpha_deg, beta_deg: float = 0.0) -> list[FlightCondition]:
+def build_conditions(
+    mach,
+    altitude_m,
+    alpha_deg,
+    delta_deg=0.0,
+    beta_deg: float = 0.0,
+) -> list[FlightCondition]:
     """Cartesian product of the given values.
 
-    Each of mach, altitude_m, alpha_deg is either a number (single value)
-    or a (start, stop, n) tuple (loop). A list of length 1 is a single condition.
+    mach, altitude_m, alpha_deg and delta_deg are each either a number
+    (single value) or a (start, stop, n) tuple (loop).
     """
     machs = _as_values(mach)
     alts = _as_values(altitude_m)
     alphas = _as_values(alpha_deg)
+    deltas = _as_values(delta_deg)
 
-    total = len(machs) * len(alts) * len(alphas)
+    total = len(machs) * len(alts) * len(alphas) * len(deltas)
     if total > MAX_CONDITIONS:
         raise ValueError(
             f"{total} conditions requested, the maximum is {MAX_CONDITIONS}"
         )
 
     return [
-        FlightCondition(m, h, a, beta_deg)
-        for m, h, a in itertools.product(machs, alts, alphas)
+        FlightCondition(m, h, a, beta_deg, d)
+        for m, h, a, d in itertools.product(machs, alts, alphas, deltas)
     ]
