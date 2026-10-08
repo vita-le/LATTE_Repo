@@ -26,6 +26,9 @@ class RoskamGeometry:
     c_aileron: float        # control-surface chord (hinge to TE plus balance) [m]
     mac: float              # mean aerodynamic chord [m]
     hinge: float            # hinge position, fraction of c_aileron from the LE
+    # Chord used for cf_ratio = c_aileron / reference chord. None -> MAC, like the
+    # MATLAB code; pass the local wing chord at the aileron for Roskam's definition.
+    cf_reference_chord: float | None = None
 
 
 @dataclass(frozen=True)
@@ -71,7 +74,8 @@ def hinge_coefficients(
     t_c = airfoil.t_c
     cf = geo.c_aileron * (1 - geo.hinge)          # hinge -> TE
     cb = geo.c_aileron * geo.hinge                # LE -> hinge
-    cf_ratio = geo.c_aileron / geo.mac            # NB: MATLAB uses c_aileron, not cf
+    reference_chord = geo.cf_reference_chord or geo.mac
+    cf_ratio = geo.c_aileron / reference_chord    # NB: MATLAB uses c_aileron, not cf
     eta_i = geo.y_i / (geo.b / 2)
     eta_o = geo.y_o / (geo.b / 2)
     tc = t_c * geo.c_aileron                      # thickness of the control surface

@@ -1,18 +1,19 @@
-.venv/
-__pycache__/
-*.pyc
-.vscode/
+# Python
 __pycache__/
 *.py[cod]
-__pycache__/
-*.pyc
 *.egg-info/
 build/
 dist/
-__pycache__/
-*.pyc
-*.egg-info/
-build/
-dist/
+
+# Environments and editors
+.venv/
+.vscode/
+
+# Test and tool caches
 .pytest_cache/
-scripts/explore_output.txt
+
+# Generated output of the exploration scripts
+scripts/*.txt
+
+# MATLAB result files (large, kept outside the repository)
+*.mat
