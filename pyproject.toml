@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "latte"
 version = "0.1.0"
 requires-python = ">=3.10"
-dependencies = ["numpy", "scipy", "matplotlib", "pyvista", "pyvistaqt", "PySide6"]
+dependencies = ["numpy", "scipy>1.13", "matplotlib", "pyvista", "pyvistaqt", "PySide6"]
 
 [project.scripts]
 latte = "latte.gui.main:main"

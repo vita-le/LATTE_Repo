@@ -36,6 +36,9 @@ class RoskamAirfoil:
     t_c: float              # thickness ratio
     phi_te_1_deg: float     # trailing-edge angle, upper/first value [deg]
     phi_te_2_deg: float     # trailing-edge angle, second value [deg]
+    # Nose shape of the control surface: 'sharp', 'elliptic' or 'round'
+    # (balance charts); 'elliptic' is what the MATLAB code uses.
+    nose_type: str = "elliptic"
 
 
 @dataclass(frozen=True)
@@ -64,7 +67,6 @@ def hinge_coefficients(
     geo: RoskamGeometry,
     airfoil: RoskamAirfoil,
     flight: RoskamFlight,
-    nose_type: str = "elliptic",
 ) -> RoskamCoefficients:
     """Compute Cha and Chd exactly as Hinge_Coeff.m does."""
     if flight.mach >= 1.0:
@@ -111,7 +113,7 @@ def hinge_coefficients(
     if br_squared < 0:
         raise ValueError("Balance ratio is complex: (cb/cf)^2 < (tc/(2cf))^2")
     br = math.sqrt(br_squared)
-    cha_balance_ratio = charts.get_balance_effect_chalpha(br, nose_type)
+    cha_balance_ratio = charts.get_balance_effect_chalpha(br, airfoil.nose_type)
     cha_balance = cha2 * cha_balance_ratio
 
     # Mach correction
@@ -141,7 +143,7 @@ def hinge_coefficients(
     else:
         chd2 = chd1 + 2 * cld_theory * (1 - cld_ratio) * (tan_phi2 - t_c)
 
-    chd_balance_ratio = charts.get_balance_effect_chdelta(br, nose_type)
+    chd_balance_ratio = charts.get_balance_effect_chdelta(br, airfoil.nose_type)
     chd_balance = chd2 * chd_balance_ratio
     chd_m = chd_balance / math.sqrt(1 - flight.mach ** 2)
 

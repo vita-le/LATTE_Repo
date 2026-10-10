@@ -85,3 +85,19 @@ def test_thickness_warning_is_emitted_for_zero_te_angle():
     flight = RoskamFlight(mach=0.5, delta_deg=0.0, reynolds=2e7)
     with pytest.warns(RoskamModelWarning):
         hinge_coefficients(GEO, AIRFOIL, flight)
+
+
+def test_nose_type_changes_balance_effect():
+    from dataclasses import replace
+
+    flight = RoskamFlight(mach=0.5, delta_deg=5.0, reynolds=2e7)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        elliptic = hinge_coefficients(GEO, AIRFOIL, flight)
+        round_ = hinge_coefficients(GEO, replace(AIRFOIL, nose_type="round"), flight)
+    assert round_.values["Cha_balance_ratio"] < elliptic.values["Cha_balance_ratio"]
+    assert round_.cha != pytest.approx(elliptic.cha)
+    with pytest.raises(ValueError):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            hinge_coefficients(GEO, replace(AIRFOIL, nose_type="pointy"), flight)

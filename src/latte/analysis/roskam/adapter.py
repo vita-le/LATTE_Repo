@@ -7,11 +7,12 @@ Input data (all lengths in metres):
   aileron_geometry: {'inner'/'outer': {'leading_edge', 'hinge', 'trailing_edge'}}
 """
 import math
+import warnings
 from dataclasses import dataclass
 
 import numpy as np
 
-from latte.analysis.roskam.coefficients import RoskamGeometry
+from latte.analysis.roskam.coefficients import RoskamGeometry, RoskamModelWarning
 
 
 @dataclass(frozen=True)
@@ -22,6 +23,7 @@ class Planform:
     mac: float                  # mean aerodynamic chord [m]
     lambda_c4_deg: float        # sweep of the quarter-chord line, root to tip [deg]
     mirrored: bool              # True if the CPACS wing is one half of a symmetric wing
+    area_source: str            # 'cpacs' (TiGL area) or 'stations' (integrated)
     y: np.ndarray               # station y coordinates (sorted)
     chord: np.ndarray           # chord at each station
 
@@ -59,6 +61,19 @@ def planform_from_wing(wing: dict) -> Planform:
     # One half of a symmetric wing: TiGL reports the full span
     y_extent = float(y[-1] - y[0])
     mirrored = wing["span"] > 1.5 * y_extent
+    # TiGL reports the area of the semi-wing; it is exact, so prefer it when it
+    # agrees with the area integrated from the stations (10 samples only).
+    cpacs_half = float(wing.get("area") or 0.0)
+    area_source = "stations"
+    if cpacs_half > 0:
+        if abs(cpacs_half - area_half) / area_half <= 0.03:
+            area_half, area_source = cpacs_half, "cpacs"
+        else:
+            warnings.warn(
+                f"CPACS wing area ({cpacs_half:.4g} m2) differs from the area integrated "
+                f"from the stations ({area_half:.4g} m2): using the integrated one",
+                RoskamModelWarning, stacklevel=2,
+            )
     area = 2 * area_half if mirrored else area_half
     span = float(wing["span"])
 
@@ -72,19 +87,19 @@ def planform_from_wing(wing: dict) -> Planform:
 
     return Planform(
         span=span, area=area, aspect_ratio=span ** 2 / area, mac=mac,
-        lambda_c4_deg=lambda_c4, mirrored=mirrored, y=y, chord=chord,
+        lambda_c4_deg=lambda_c4, mirrored=mirrored, area_source=area_source, y=y, chord=chord,
     )
 
 
 def build_roskam_geometry(
     wing: dict,
     aileron_geometry: dict,
-    use_local_chord_ratio: bool = False,
+    use_local_chord_ratio: bool = True,
 ) -> tuple[RoskamGeometry, dict]:
     """Return (RoskamGeometry, diagnostics).
 
-    use_local_chord_ratio=False reproduces the MATLAB cf_ratio = c_aileron / MAC.
-    True uses the local wing chord at the aileron (aileron chord / local chord).
+    use_local_chord_ratio=True (default): cf_ratio = aileron chord / local wing chord.
+    False reproduces the MATLAB cf_ratio = c_aileron / MAC.
     """
     plan = planform_from_wing(wing)
     inner, outer = aileron_geometry["inner"], aileron_geometry["outer"]
@@ -124,6 +139,7 @@ def build_roskam_geometry(
     cb_over_cf = hinge / (1 - hinge)
     diagnostics = {
         "planform_area_m2": plan.area,
+        "area_source": plan.area_source,
         "cpacs_wing_area_m2": wing["area"],
         "mirrored_wing": plan.mirrored,
         "local_wing_chord_m": local_chord,

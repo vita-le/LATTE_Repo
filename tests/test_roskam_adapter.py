@@ -76,8 +76,8 @@ def test_hinge_line_sweep():
 
 def test_cf_ratio_definition_switch():
     wing, ail = make_wing(), aileron(3.0, 4.0, 0.0, 0.5, 0.5)
-    geo_mac, diag = build_roskam_geometry(wing, ail)
-    geo_loc, _ = build_roskam_geometry(wing, ail, use_local_chord_ratio=True)
+    geo_mac, diag = build_roskam_geometry(wing, ail, use_local_chord_ratio=False)
+    geo_loc, _ = build_roskam_geometry(wing, ail)           # local chord is the default
     assert geo_mac.cf_reference_chord is None
     # local chord at y = 3 -> 1.4, at y = 4 -> 1.2 : mean 1.3
     assert geo_loc.cf_reference_chord == pytest.approx(1.3)
@@ -87,3 +87,30 @@ def test_cf_ratio_definition_switch():
 def test_invalid_aileron_order():
     with pytest.raises(ValueError):
         build_roskam_geometry(make_wing(), aileron(4.0, 3.0, 0.0, 0.5, 0.5))
+
+
+def test_cpacs_area_is_preferred_when_consistent():
+    from latte.analysis.roskam.adapter import planform_from_wing
+
+    wing = make_wing()
+    wing["area"] = 7.55                                    # semi-wing, 0.7% off the stations
+    plan = planform_from_wing(wing)
+    assert plan.area_source == "cpacs"
+    assert plan.area == pytest.approx(15.10)
+
+
+def test_inconsistent_cpacs_area_falls_back_with_warning():
+    from latte.analysis.roskam.adapter import planform_from_wing
+    from latte.analysis.roskam.coefficients import RoskamModelWarning
+
+    wing = make_wing()
+    wing["area"] = 15.0                                    # full-wing area by mistake
+    with pytest.warns(RoskamModelWarning):
+        plan = planform_from_wing(wing)
+    assert plan.area_source == "stations"
+    assert plan.area == pytest.approx(15.0)
+
+
+def test_local_chord_is_the_default():
+    geo, _ = build_roskam_geometry(make_wing(), aileron(3.0, 4.0, 0.0, 0.5, 0.5))
+    assert geo.cf_reference_chord == pytest.approx(1.3)
