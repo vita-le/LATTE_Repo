@@ -1,4 +1,6 @@
 # tests/test_cpacs_airfoil.py
+import math
+
 import pytest
 
 from latte.core.cpacs_airfoil import (
@@ -22,7 +24,7 @@ NACA0009_XML = """<?xml version="1.0"?>
       <z mapType="vector">0.0;-0.00605;-0.01086;-0.01967;-0.02748;-0.03423;-0.03971;-0.04352;-0.04501;-0.04456;-0.04303;-0.04009;-0.03512;-0.0315;-0.02666;-0.01961;-0.0142;-0.0089;0.0;0.0089;0.0142;0.01961;0.02666;0.0315;0.03512;0.04009;0.04303;0.04456;0.04501;0.04352;0.03971;0.03423;0.02748;0.01967;0.01086;0.00605;0.0</z>
     </pointList>
   </wingAirfoil>
-  <wingAirfoil uID="CST_PROFILE"><name>no point list</name></wingAirfoil>
+  <wingAirfoil uID="UNSUPPORTED"><name>no point list, no cst</name></wingAirfoil>
 </wingAirfoils></profiles></vehicles></cpacs>
 """
 
@@ -39,7 +41,7 @@ def test_parse_vector():
 
 
 def test_list_and_read(xml_file):
-    assert list_airfoil_uids(xml_file) == ["CST_PROFILE", "NACA0009"]
+    assert list_airfoil_uids(xml_file) == ["NACA0009", "UNSUPPORTED"]
     x, z = read_airfoil_points(xml_file, "NACA0009")
     assert len(x) == len(z) == 37
 
@@ -55,20 +57,26 @@ def test_missing_and_unsupported_airfoil(xml_file):
     with pytest.raises(KeyError):
         read_airfoil_points(xml_file, "NOPE")
     with pytest.raises(NotImplementedError):
-        read_airfoil_points(xml_file, "CST_PROFILE")
+        read_airfoil_points(xml_file, "UNSUPPORTED")
 
 
-@pytest.mark.parametrize("name", ["cs23_base.xml", "DLH_CPACS.xml"])
-def test_point_list_airfoils_of_example_files_are_plausible(examples_dir, name):
+@pytest.mark.parametrize(
+    "name",
+    ["cs23_base.xml", "DLH_CPACS.xml", "GripenECPACS.xml", "F18SRA_cpacs.xml", "TEST_CPACS.xml"],
+)
+def test_airfoils_of_example_files_are_plausible(examples_dir, name):
     checked = 0
     for uid in list_airfoil_uids(examples_dir / name):
-        try:
-            props = cpacs_airfoil_properties(examples_dir / name, uid)
-        except NotImplementedError:
-            continue                                  # not a point list
+        props = cpacs_airfoil_properties(examples_dir / name, uid)   # pointList or CST
         assert 0.005 < props.t_c < 0.30, f"{uid}: t/c={props.t_c}"
         checked += 1
     assert checked >= 1
+
+
+def test_cst_naca0005_of_gripen_has_five_percent_thickness(examples_dir):
+    # Independent check of the CST convention: a profile called NACA0005 must be 5% thick
+    props = cpacs_airfoil_properties(examples_dir / "GripenECPACS.xml", "NACA0005")
+    assert props.t_c == pytest.approx(0.05, abs=0.005)
 
 
 def test_constant_thickness_profile_has_zero_trailing_edge_angle(examples_dir):
@@ -163,3 +171,40 @@ def test_aileron_airfoil_is_the_mean_of_its_two_edges(tapered_wing_xml):
 def test_unknown_wing(tapered_wing_xml):
     with pytest.raises(KeyError):
         read_wing_sections(tapered_wing_xml, "nope")
+
+
+# ---- CST airfoils (synthetic) -----------------------------------------------------
+def cst_xml(tmp_path, b=0.1, te=0.0, with_psi=True):
+    psi = ";".join(f"{0.5 * (1 - math.cos(math.pi * i / 100)):.8f}" for i in range(101))
+    coeffs = ";".join([str(b)] * 6)
+    psi_el = f"<psi>{psi}</psi>" if with_psi else ""
+    xml = (f'<cpacs><vehicles><profiles><wingAirfoils><wingAirfoil uID="CST"><name>c</name>'
+           f'<cst2D>{psi_el}<upperN1>0.5</upperN1><upperN2>1.0</upperN2><upperB>{coeffs}</upperB>'
+           f'<lowerN1>0.5</lowerN1><lowerN2>1.0</lowerN2><lowerB>{coeffs}</lowerB>'
+           f'<trailingEdgeThickness>{te}</trailingEdgeThickness></cst2D></wingAirfoil>'
+           f'</wingAirfoils></profiles></vehicles></cpacs>')
+    path = tmp_path / "cst.xml"
+    path.write_text(xml)
+    return path
+
+
+def test_cst_constant_coefficients_have_analytic_thickness(tmp_path):
+    # All B_i = c  ->  z = c * sqrt(psi) * (1 - psi), maximum 2/(3*sqrt(3)) at psi = 1/3
+    props = cpacs_airfoil_properties(cst_xml(tmp_path, b=0.1), "CST")
+    assert props.t_c == pytest.approx(2 * 0.1 * 2 / (3 * math.sqrt(3)), abs=1e-3)
+
+
+def test_cst_default_psi_when_missing(tmp_path):
+    props = cpacs_airfoil_properties(cst_xml(tmp_path, b=0.1, with_psi=False), "CST")
+    assert props.t_c == pytest.approx(0.07698, abs=1e-3)
+
+
+def test_cst_trailing_edge_thickness_is_split_between_surfaces(tmp_path):
+    x, z = read_airfoil_points(cst_xml(tmp_path, b=0.1, te=0.01), "CST")
+    assert x[0] == pytest.approx(1.0) and x[-1] == pytest.approx(1.0)
+    assert z[0] == pytest.approx(+0.005) and z[-1] == pytest.approx(-0.005)
+
+
+def test_cst_contour_starts_on_the_upper_surface(tmp_path):
+    x, z = read_airfoil_points(cst_xml(tmp_path, b=0.1), "CST")
+    assert z[len(z) // 4] > 0 > z[3 * len(z) // 4]

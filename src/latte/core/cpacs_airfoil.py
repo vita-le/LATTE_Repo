@@ -1,8 +1,11 @@
 # src/latte/core/cpacs_airfoil.py
 """Read airfoil contours from the profiles section of a CPACS file."""
+import math
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
+
+import numpy as np
 
 from latte.core.airfoil import AirfoilProperties, airfoil_properties
 
@@ -38,15 +41,68 @@ def list_airfoil_uids(path):
     return sorted(_airfoil_elements(path))
 
 
+def _cst_surface(psi, n1, n2, coefficients):
+    """Kulfan CST: z(psi) = psi^N1 (1-psi)^N2 * sum_i B_i C(n,i) psi^i (1-psi)^(n-i)."""
+    n = len(coefficients) - 1
+    shape = sum(
+        b * math.comb(n, i) * psi ** i * (1 - psi) ** (n - i)
+        for i, b in enumerate(coefficients)
+    )
+    return psi ** n1 * (1 - psi) ** n2 * shape
+
+
+def _cst_contour(cst, airfoil_uid):
+    """Contour (TE -> upper -> LE -> lower -> TE) of a CPACS <cst2D> definition.
+
+    Both coefficient vectors are positive in CPACS: the lower surface is mirrored
+    (z_lower = -CST). trailingEdgeThickness is split equally between both surfaces.
+    """
+    def number(name, default=None):
+        el = _child(cst, name)
+        if el is None or not el.text or not el.text.strip():
+            if default is None:
+                raise ValueError(f"Airfoil {airfoil_uid!r}: cst2D has no <{name}>")
+            return default
+        return float(el.text)
+
+    def vector(name):
+        el = _child(cst, name)
+        if el is None or not el.text:
+            raise ValueError(f"Airfoil {airfoil_uid!r}: cst2D has no <{name}>")
+        return parse_vector(el.text)
+
+    upper_b, lower_b = vector("upperB"), vector("lowerB")
+    psi_el = _child(cst, "psi")
+    if psi_el is not None and psi_el.text and psi_el.text.strip():
+        psi = np.sort(np.array(parse_vector(psi_el.text)))
+    else:
+        psi = 0.5 * (1 - np.cos(np.linspace(0, math.pi, 201)))       # cosine spacing
+    te = number("trailingEdgeThickness", 0.0)
+
+    z_upper = _cst_surface(psi, number("upperN1"), number("upperN2"), upper_b) + psi * te / 2
+    z_lower = -_cst_surface(psi, number("lowerN1"), number("lowerN2"), lower_b) - psi * te / 2
+    x = np.concatenate([psi[::-1], psi[1:]])
+    z = np.concatenate([z_upper[::-1], z_lower[1:]])
+    return x.tolist(), z.tolist()
+
+
 def read_airfoil_points(path, airfoil_uid):
-    """Return (x, z) lists of the contour of a wing airfoil (chord-normalised in CPACS)."""
+    """Return (x, z) lists of the contour of a wing airfoil (chord-normalised in CPACS).
+
+    Supports <pointList> and Kulfan <cst2D> definitions.
+    """
     airfoils = _airfoil_elements(path)
     if airfoil_uid not in airfoils:
         raise KeyError(f"Airfoil {airfoil_uid!r} is not defined in {Path(path).name}")
-    point_list = _child(airfoils[airfoil_uid], "pointList")
+    element = airfoils[airfoil_uid]
+
+    point_list = _child(element, "pointList")
     if point_list is None:
+        cst = _child(element, "cst2D")
+        if cst is not None:
+            return _cst_contour(cst, airfoil_uid)
         raise NotImplementedError(
-            f"Airfoil {airfoil_uid!r} is not defined by a point list (e.g. CST): not supported yet"
+            f"Airfoil {airfoil_uid!r} has neither a pointList nor a cst2D: not supported"
         )
     x_el, z_el = _child(point_list, "x"), _child(point_list, "z")
     if x_el is None or z_el is None or not x_el.text or not z_el.text:
