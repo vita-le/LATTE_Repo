@@ -63,13 +63,17 @@ def main():
                 "MAC [m]": geo.mac,
                 "t/c [-]": airfoil.t_c,
             }
-            print(f"  {'quantity':20s}{'CPACS':>12s}{'MATLAB':>12s}{'diff':>10s}")
+            compare = "F18" in path.name.upper()        # MATLAB values exist only for the F/A-18
+            header = f"  {'quantity':20s}{'CPACS':>12s}"
+            print(header + (f"{'MATLAB':>12s}{'diff':>10s}" if compare else ""))
             for name, value in rows.items():
-                ref = MATLAB_REFERENCE[name]
-                diff = f"{(value - ref) / abs(ref) * 100:+.1f}%" if ref else ""
-                print(f"  {name:20s}{value:12.4f}{ref:12.4f}{diff:>10s}")
+                line = f"  {name:20s}{value:12.4f}"
+                if compare:
+                    ref = MATLAB_REFERENCE[name]
+                    line += f"{ref:12.4f}{(value - ref) / abs(ref) * 100:+9.1f}%"
+                print(line)
             print(f"  Phi_TE_1 = {airfoil.phi_te_1_deg:.2f} deg, Phi_TE_2 = {airfoil.phi_te_2_deg:.2f} deg"
-                  f"   (MATLAB loop: 0, 0)")
+                  + ("   (MATLAB loop: 0, 0)" if compare else ""))
             print(f"  S = {diag['planform_area_m2']:.3f} m2 (area from {diag['area_source']}), "
                   f"aileron area = {diag['aileron_area_m2']:.3f} m2")
             print(f"  cf/c: local chord = {diag['cf_ratio_local']:.3f} "
@@ -79,4 +83,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    

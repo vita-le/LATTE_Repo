@@ -1,18 +1,25 @@
-# analysis/runner.py
-import numpy as np
-from .base import FlightCondition
+# src/latte/analysis/runner.py
+"""Run a solver over a list of flight conditions (single condition = list of length 1)."""
+from latte.analysis.base import HingeMomentResult
 
-def make_loop_conditions(mach_range, alt_range, alpha_range):
-    """Build the Cartesian product of the given (start, stop, n) ranges."""
-    machs = np.linspace(*mach_range)
-    alts = np.linspace(*alt_range)
-    alphas = np.linspace(*alpha_range)
-    return [FlightCondition(m, h, a) for m in machs for h in alts for a in alphas]
 
-def run_loop(solver, wing, aileron, conditions, progress_cb=None):
+def run_conditions(solver, conditions, progress_cb=None, should_cancel=None):
+    """Run the solver on each condition and return the list of results.
+
+    A condition that cannot be computed (e.g. Mach >= 1 for Roskam) gives a result
+    with .error set instead of stopping the whole loop.
+    progress_cb(done, total) is called after each condition; should_cancel() -> True
+    stops the loop early (the results computed so far are returned).
+    """
     results = []
-    for i, cond in enumerate(conditions):
-        results.append(solver.run(wing, aileron, cond))
-        if progress_cb:
-            progress_cb(i + 1, len(conditions))   # lets the GUI update a progress bar
+    total = len(conditions)
+    for i, condition in enumerate(conditions):
+        if should_cancel is not None and should_cancel():
+            break
+        try:
+            results.append(solver.run(condition))
+        except (ValueError, ArithmeticError) as error:
+            results.append(HingeMomentResult.failed(solver.name, condition, str(error)))
+        if progress_cb is not None:
+            progress_cb(i + 1, total)
     return results

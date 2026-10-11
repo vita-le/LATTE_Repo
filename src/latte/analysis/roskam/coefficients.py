@@ -111,7 +111,11 @@ def hinge_coefficients(
     # Balance correction
     br_squared = (cb / cf) ** 2 - (tc / (2 * cf)) ** 2
     if br_squared < 0:
-        raise ValueError("Balance ratio is complex: (cb/cf)^2 < (tc/(2cf))^2")
+        raise ValueError(
+            "Roskam is not applicable: the hinge is too close to the control-surface "
+            f"leading edge (cb/cf = {cb / cf:.3f}, it must exceed tc/(2cf) = {tc / (2 * cf):.3f}). "
+            "The balance charts need a control surface with aerodynamic balance."
+        )
     br = math.sqrt(br_squared)
     cha_balance_ratio = charts.get_balance_effect_chalpha(br, airfoil.nose_type)
     cha_balance = cha2 * cha_balance_ratio
