@@ -6,19 +6,20 @@ from tkinter import messagebox
 from latte.core.flight_state import build_conditions, flow_summary
 from latte.gui.style import (
     CARD_BACKGROUND,
-    TEXT,
-    SECONDARY_TEXT,
-    PRIMARY,
-    FONT_SECTION,
     FONT_LABEL,
     FONT_NORMAL,
+    FONT_SECTION,
+    PRIMARY,
+    SECONDARY_TEXT,
+    TEXT,
 )
 
-# name, label, default start, default stop, default n
+# name, label, default value/start, default stop, default number of points
 FIELDS = [
     ("mach", "Mach [-]", "0.3", "0.5", "3"),
     ("altitude", "Altitude [m]", "0", "5000", "3"),
     ("alpha", "Alpha [deg]", "0", "6", "3"),
+    ("delta", "Delta (aileron) [deg]", "10", "20", "3"),
 ]
 
 
@@ -29,15 +30,11 @@ class FlightConditionPanel:
         self.conditions = []
 
         self.frame = tk.Frame(
-            parent,
-            bg=CARD_BACKGROUND,
-            highlightbackground="#D0D5DD",
-            highlightthickness=1,
+            parent, bg=CARD_BACKGROUND, highlightbackground="#D0D5DD", highlightthickness=1,
         )
 
         tk.Label(
-            self.frame, text="FLIGHT CONDITIONS", font=FONT_SECTION,
-            fg=TEXT, bg=CARD_BACKGROUND,
+            self.frame, text="FLIGHT CONDITIONS", font=FONT_SECTION, fg=TEXT, bg=CARD_BACKGROUND,
         ).grid(row=0, column=0, columnspan=4, sticky="w", padx=20, pady=(15, 5))
 
         # Single / Loop selector
@@ -47,24 +44,22 @@ class FlightConditionPanel:
         for text, value in (("Single condition", "single"), ("Loop conditions", "loop")):
             tk.Radiobutton(
                 mode_row, text=text, value=value, variable=self.mode,
-                command=self._on_mode_change, font=FONT_NORMAL,
-                fg=TEXT, bg=CARD_BACKGROUND, activebackground=CARD_BACKGROUND,
-                selectcolor=CARD_BACKGROUND,
+                command=self._on_mode_change, font=FONT_NORMAL, fg=TEXT, bg=CARD_BACKGROUND,
+                activebackground=CARD_BACKGROUND, selectcolor=CARD_BACKGROUND,
             ).pack(side="left", padx=(0, 15))
 
         # Column headers
         for col, text in enumerate(("", "Value / Start", "Stop", "Points")):
             tk.Label(
-                self.frame, text=text, font=FONT_LABEL,
-                fg=SECONDARY_TEXT, bg=CARD_BACKGROUND,
+                self.frame, text=text, font=FONT_LABEL, fg=SECONDARY_TEXT, bg=CARD_BACKGROUND,
             ).grid(row=2, column=col, sticky="w", padx=(20 if col == 0 else 5, 5))
 
         # One row of three entries per variable
         self.entries = {}
         for row, (name, label, start, stop, n) in enumerate(FIELDS, start=3):
             tk.Label(
-                self.frame, text=label, font=FONT_NORMAL,
-                fg=TEXT, bg=CARD_BACKGROUND, anchor="w", width=14,
+                self.frame, text=label, font=FONT_NORMAL, fg=TEXT, bg=CARD_BACKGROUND,
+                anchor="w", width=20,
             ).grid(row=row, column=0, sticky="w", padx=(20, 5), pady=3)
             row_entries = []
             for col, default in enumerate((start, stop, n), start=1):
@@ -74,19 +69,19 @@ class FlightConditionPanel:
                 row_entries.append(entry)
             self.entries[name] = tuple(row_entries)
 
-        # Apply button and result text
+        last = 3 + len(FIELDS)
         tk.Button(
             self.frame, text="Apply", command=self.apply, font=("Segoe UI", 9, "bold"),
-            fg="white", bg=PRIMARY, activebackground=PRIMARY,
-            activeforeground="white", relief="flat", cursor="hand2", width=12,
-        ).grid(row=6, column=0, sticky="w", padx=20, pady=(10, 5))
+            fg="white", bg=PRIMARY, activebackground=PRIMARY, activeforeground="white",
+            relief="flat", cursor="hand2", width=12,
+        ).grid(row=last, column=0, sticky="w", padx=20, pady=(10, 5))
 
         self.summary_label = tk.Label(
-            self.frame, text="No flight condition applied yet", font=FONT_NORMAL,
+            self.frame, text="Fields are read when an analysis is started", font=FONT_NORMAL,
             fg=SECONDARY_TEXT, bg=CARD_BACKGROUND, justify="left", anchor="w",
         )
         self.summary_label.grid(
-            row=7, column=0, columnspan=4, sticky="w", padx=20, pady=(0, 15)
+            row=last + 1, column=0, columnspan=4, sticky="w", padx=20, pady=(0, 15)
         )
 
         self._on_mode_change()
@@ -121,6 +116,7 @@ class FlightConditionPanel:
             self._read("mach"),
             self._read("altitude"),
             self._read("alpha"),
+            self._read("delta"),
         )
 
     def apply(self):

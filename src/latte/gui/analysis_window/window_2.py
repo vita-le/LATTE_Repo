@@ -194,8 +194,9 @@ class AnalysisWindow:
             buttons_frame,
             self.cpacs_file,
             self.configuration,
+            self.flight_panel,
         )
-
+        
         self.roskam_button.pack(
             side="left",
             padx=(0, 10),
