@@ -45,8 +45,14 @@ def parse_dat(text: str):
     return name, x, z
 
 
-def airfoil_xml(uid: str, name: str, x, z, indent: str = "        ") -> str:
-    """The <wingAirfoil> element for these points."""
+def airfoil_xml(uid: str, name: str, x, z, indent: str = "        ", lower_first: bool = True) -> str:
+    """The <wingAirfoil> element for these points.
+
+    lower_first=True writes TE -> lower surface -> LE -> upper surface, the order the
+    openAD profiles use and TiGL does not warn about (parse_dat gives upper-first).
+    """
+    if lower_first and z[len(z) // 4] > 0:
+        x, z = list(x)[::-1], list(z)[::-1]
     def vector(values):
         return ";".join(repr(float(v)) for v in values)
 

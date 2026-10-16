@@ -83,3 +83,19 @@ def test_insert_refuses_duplicates_and_missing_section():
         insert_airfoil(CPACS, snippet, "OTHER")
     with pytest.raises(ValueError):
         insert_airfoil("<cpacs/>", snippet, "NEW")
+
+
+def test_airfoil_xml_is_lower_first_by_default():
+    from latte.core.cpacs_airfoil import read_airfoil_points
+
+    _, x, z = parse_dat(selig_text())               # Selig: upper surface first
+    assert z[len(z) // 4] > 0
+    snippet = airfoil_xml("A", "n", x, z)
+    path_text = f"<cpacs><wingAirfoils>{snippet}</wingAirfoils></cpacs>"
+    import tempfile, pathlib
+    path = pathlib.Path(tempfile.mkdtemp()) / "a.xml"
+    path.write_text(path_text)
+    xs, zs = read_airfoil_points(path, "A")
+    assert zs[len(zs) // 4] < 0 < zs[3 * len(zs) // 4]           # lower surface first
+    upper_first = airfoil_xml("A", "n", x, z, lower_first=False)
+    assert repr(float(z[1])) in upper_first.split("<z")[1]
