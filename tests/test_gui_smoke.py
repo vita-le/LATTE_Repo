@@ -16,15 +16,24 @@ from latte.gui.analysis_window.roskam_button import RoskamButton, RoskamOptionsD
 from test_roskam_solver import CASE                                         # noqa: E402
 
 
-@pytest.fixture
-def root():
+@pytest.fixture(scope="session")
+def _tk_root():
+    """One hidden Tk root for the whole session (creating several in one process is unreliable)."""
     try:
         window = tk.Tk()
-    except tk.TclError:
-        pytest.skip("no display available")
+    except tk.TclError as error:
+        pytest.skip(f"no display available: {error}")
     window.withdraw()
     yield window
     window.destroy()
+
+
+@pytest.fixture
+def root(_tk_root):
+    yield _tk_root
+    for child in _tk_root.winfo_children():          # close dialogs/windows left by the test
+        child.destroy()
+    _tk_root.update()
 
 
 def toplevels(root):
