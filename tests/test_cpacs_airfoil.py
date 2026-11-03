@@ -208,3 +208,29 @@ def test_cst_trailing_edge_thickness_is_split_between_surfaces(tmp_path):
 def test_cst_contour_starts_on_the_upper_surface(tmp_path):
     x, z = read_airfoil_points(cst_xml(tmp_path, b=0.1), "CST")
     assert z[len(z) // 4] > 0 > z[3 * len(z) // 4]
+
+
+def test_thickness_ratio_for_aileron_blends_the_two_sections(tapered_wing_xml):
+    from latte.core.airfoil import thickness_ratio_at
+    from latte.core.cpacs_airfoil import thickness_ratio_for_aileron
+
+    thin = thickness_ratio_at(*read_airfoil_points(tapered_wing_xml, "THIN"), 0.78)
+    thick = thickness_ratio_at(*read_airfoil_points(tapered_wing_xml, "THICK"), 0.78)
+    value = thickness_ratio_for_aileron(tapered_wing_xml, "w", 2.0, 4.0, 0.78)   # mean fraction 50%
+    assert value == pytest.approx(0.5 * (thin + thick))
+    assert thin < value < thick
+
+
+def test_read_reference_area(tmp_path):
+    from latte.core.cpacs_reference import read_reference_area
+
+    xml = ("<cpacs><vehicles><aircraft>"
+           "<model uID='A'><reference><area>37.16</area><length>3</length></reference></model>"
+           "<model uID='B'><reference><area>10.0</area></reference></model>"
+           "</aircraft></vehicles></cpacs>")
+    path = tmp_path / "r.xml"
+    path.write_text(xml)
+    assert read_reference_area(path) == pytest.approx(37.16)                 # first model
+    assert read_reference_area(path, "B") == pytest.approx(10.0)             # selected model
+    path.write_text("<cpacs><vehicles><aircraft><model uID='A'/></aircraft></vehicles></cpacs>")
+    assert read_reference_area(path) is None

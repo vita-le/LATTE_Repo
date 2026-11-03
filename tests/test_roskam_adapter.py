@@ -114,3 +114,15 @@ def test_inconsistent_cpacs_area_falls_back_with_warning():
 def test_local_chord_is_the_default():
     geo, _ = build_roskam_geometry(make_wing(), aileron(3.0, 4.0, 0.0, 0.5, 0.5))
     assert geo.cf_reference_chord == pytest.approx(1.3)
+
+
+def test_reference_area_sets_the_aspect_ratio():
+    wing, ail = make_wing(), aileron(3.0, 4.0, 0.0, 0.5, 0.5)
+    geo_geometric, diag = build_roskam_geometry(wing, ail)
+    geo_ref, diag_ref = build_roskam_geometry(wing, ail, reference_area=20.0)
+    assert geo_geometric.aspect_ratio == pytest.approx(100.0 / 15.0)          # b^2 / S of the planform
+    assert geo_ref.aspect_ratio == pytest.approx(100.0 / 20.0)                # b^2 / S_ref
+    assert diag_ref["aspect_ratio_geometric"] == pytest.approx(100.0 / 15.0)
+    assert diag_ref["reference_area_m2"] == 20.0
+    with pytest.raises(ValueError):
+        build_roskam_geometry(wing, ail, reference_area=0.0)

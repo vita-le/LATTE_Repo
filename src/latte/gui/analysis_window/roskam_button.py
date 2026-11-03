@@ -33,6 +33,8 @@ class RoskamOptionsDialog:
 
         self.nose = tk.StringVar(value="elliptic")
         self.reference = tk.StringVar(value="local")
+        self.area = tk.StringVar(value="reference")
+        self.thickness = tk.StringVar(value="profile")
         self.offset = tk.StringVar(value="0")
 
         body = tk.Frame(self.window, bg=CARD_BACKGROUND)
@@ -57,9 +59,25 @@ class RoskamOptionsDialog:
                 selectcolor=CARD_BACKGROUND,
             ).pack(anchor="w")
 
-        label(2, "Hinge-moment offset [N*m]")
+        def radios(row, name, variable, choices):
+            label(row, name)
+            frame = tk.Frame(body, bg=CARD_BACKGROUND)
+            frame.grid(row=row, column=1, sticky="w")
+            for text, value in choices:
+                tk.Radiobutton(
+                    frame, text=text, value=value, variable=variable, font=FONT_NORMAL,
+                    fg=TEXT, bg=CARD_BACKGROUND, activebackground=CARD_BACKGROUND,
+                    selectcolor=CARD_BACKGROUND,
+                ).pack(anchor="w")
+
+        radios(2, "Aspect ratio from", self.area,
+               (("CPACS reference area (if declared)", "reference"), ("Wing geometry", "geometry")))
+        radios(3, "Thickness in the balance ratio", self.thickness,
+               (("Airfoil at the hinge line", "profile"), ("t/c x aileron chord (MATLAB)", "matlab")))
+
+        label(4, "Hinge-moment offset [N*m]")
         tk.Entry(body, textvariable=self.offset, width=12, font=FONT_NORMAL).grid(
-            row=2, column=1, sticky="w")
+            row=4, column=1, sticky="w")
 
         tk.Label(
             self.window, text="Offset = hinge moment at alpha = delta = 0 (default 0).",
@@ -85,6 +103,8 @@ class RoskamOptionsDialog:
             "nose_type": self.nose.get(),
             "use_local_chord_ratio": self.reference.get() == "local",
             "offset_nm": offset,
+            "use_reference_area": self.area.get() == "reference",
+            "hinge_thickness": self.thickness.get(),
         }
         self.window.destroy()
 
@@ -170,7 +190,7 @@ class RoskamButton:
                     return None
                 for aileron in ailerons:
                     try:
-                        cases[aileron["uid"]] = build_case(doc, aileron, **options)
+                        cases[aileron["uid"]] = build_case(doc, aileron, configuration=self.configuration, **options)
                     except (ValueError, KeyError, NotImplementedError) as error:
                         problems.append(f"{aileron['uid']}: {error}")
         except InvalidCPACSError as error:

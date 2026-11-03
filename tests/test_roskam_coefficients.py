@@ -101,3 +101,21 @@ def test_nose_type_changes_balance_effect():
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             hinge_coefficients(GEO, replace(AIRFOIL, nose_type="pointy"), flight)
+
+
+def test_hinge_thickness_enters_the_balance_ratio():
+    import math
+    from dataclasses import replace
+
+    flight = RoskamFlight(mach=0.5, delta_deg=5.0, reynolds=2e7)
+    cf = GEO.c_aileron * (1 - GEO.hinge)
+    cb = GEO.c_aileron * GEO.hinge
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        matlab = hinge_coefficients(GEO, AIRFOIL, flight)                       # t/c * c_aileron
+        thick = hinge_coefficients(replace(GEO, hinge_thickness_m=0.10), AIRFOIL, flight)
+    assert matlab.values["BR"] == pytest.approx(
+        math.sqrt((cb / cf) ** 2 - (AIRFOIL.t_c * GEO.c_aileron / (2 * cf)) ** 2))
+    assert thick.values["BR"] == pytest.approx(math.sqrt((cb / cf) ** 2 - (0.10 / (2 * cf)) ** 2))
+    assert thick.values["BR"] < matlab.values["BR"]
+    assert thick.values["tc"] == pytest.approx(0.10) if "tc" in thick.values else True

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import numpy as np
 
-from latte.core.airfoil import AirfoilProperties, airfoil_properties
+from latte.core.airfoil import AirfoilProperties, airfoil_properties, thickness_ratio_at
 
 
 def _local(tag):
@@ -204,3 +204,29 @@ def airfoil_properties_for_aileron(path, wing_uid, y_i, y_o) -> AirfoilPropertie
         airfoil_properties_at(path, wing_uid, y_o),
         0.5,
     )
+
+
+def thickness_ratio_for_aileron(path, wing_uid, y_i, y_o, xi) -> float:
+    """Airfoil thickness / chord at the chord fraction xi, averaged over the aileron span.
+
+    Like airfoil_properties_for_aileron: the airfoil is blended linearly between the two wing
+    sections around each edge of the aileron, then inboard and outboard values are averaged.
+    """
+    sections = read_wing_sections(path, wing_uid)
+    ratios = {
+        uid: thickness_ratio_at(*read_airfoil_points(path, uid), xi)
+        for uid in {s.airfoil_uid for s in sections}
+    }
+
+    def at(y):
+        if len(sections) == 1 or y <= sections[0].y:
+            return ratios[sections[0].airfoil_uid]
+        if y >= sections[-1].y:
+            return ratios[sections[-1].airfoil_uid]
+        for inner, outer in zip(sections, sections[1:]):
+            if inner.y <= y <= outer.y:
+                f = 0.0 if outer.y == inner.y else (y - inner.y) / (outer.y - inner.y)
+                return (1 - f) * ratios[inner.airfoil_uid] + f * ratios[outer.airfoil_uid]
+        raise AssertionError("unreachable")
+
+    return 0.5 * (at(y_i) + at(y_o))

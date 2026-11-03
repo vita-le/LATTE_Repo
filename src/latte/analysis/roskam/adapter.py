@@ -8,7 +8,7 @@ Input data (all lengths in metres):
 """
 import math
 import warnings
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 
@@ -95,11 +95,14 @@ def build_roskam_geometry(
     wing: dict,
     aileron_geometry: dict,
     use_local_chord_ratio: bool = True,
+    reference_area: float | None = None,
 ) -> tuple[RoskamGeometry, dict]:
     """Return (RoskamGeometry, diagnostics).
 
     use_local_chord_ratio=True (default): cf_ratio = aileron chord / local wing chord.
     False reproduces the MATLAB cf_ratio = c_aileron / MAC.
+    reference_area: wing reference area S_ref [m2] (CPACS model/reference/area). If given,
+    AR = b^2 / S_ref (as the MATLAB Geometry_Function); otherwise AR comes from the geometry.
     """
     plan = planform_from_wing(wing)
     inner, outer = aileron_geometry["inner"], aileron_geometry["outer"]
@@ -136,10 +139,16 @@ def build_roskam_geometry(
         hinge=hinge,
         cf_reference_chord=local_chord if use_local_chord_ratio else None,
     )
+    if reference_area is not None:
+        if reference_area <= 0:
+            raise ValueError("The reference area must be positive")
+        geometry = replace(geometry, aspect_ratio=plan.span ** 2 / reference_area)
     cb_over_cf = hinge / (1 - hinge)
     diagnostics = {
         "planform_area_m2": plan.area,
         "area_source": plan.area_source,
+        "reference_area_m2": reference_area,
+        "aspect_ratio_geometric": plan.aspect_ratio,
         "cpacs_wing_area_m2": wing["area"],
         "mirrored_wing": plan.mirrored,
         "local_wing_chord_m": local_chord,

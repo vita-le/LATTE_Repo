@@ -68,6 +68,9 @@ def matlab_bridge(case: RoskamCase, data) -> list[BridgeRow]:
         current.airfoil, t_c=ref_air.t_c, phi_te_1_deg=ref_air.phi_te_1_deg, phi_te_2_deg=ref_air.phi_te_2_deg))
     steps.append(("+ MATLAB airfoil (t/c = 0.10, Phi_TE = 0)", current))
 
+    current = replace(current, geometry=replace(current.geometry, hinge_thickness_m=None))
+    steps.append(("+ MATLAB thickness in the balance ratio (t/c x aileron chord)", current))
+
     current = replace(current, geometry=replace(current.geometry, aspect_ratio=ref_geo.aspect_ratio))
     steps.append((f"+ AR from S_ref (AR = {ref_geo.aspect_ratio:.3f})", current))
 
@@ -110,6 +113,8 @@ def single_input_effects(cpacs_case: RoskamCase, data) -> list[BridgeRow]:
          replace(baseline, geometry=replace(ref_geo, aspect_ratio=g.aspect_ratio))),
         (f"hinge-line sweep from the geometry ({g.lambda_hl_deg:.2f} deg)",
          replace(baseline, geometry=replace(ref_geo, lambda_hl_deg=g.lambda_hl_deg))),
+        ("hinge-line thickness from the airfoil (not t/c x aileron chord)",
+         replace(baseline, geometry=replace(ref_geo, hinge_thickness_m=g.hinge_thickness_m))),
         ("MAC (Reynolds number) from the CPACS geometry",
          replace(baseline, geometry=replace(ref_geo, mac=g.mac), reynolds_length_m=cpacs_case.reynolds_length_m)),
     ]

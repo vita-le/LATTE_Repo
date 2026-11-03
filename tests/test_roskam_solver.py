@@ -102,13 +102,14 @@ class FakeDoc:
         return self._geometry
 
 
-def make_doc(tmp_path, hinge=0.25, reference_area=None):
+def make_doc(tmp_path, hinge=0.25, reference_area=None, model_area=None):
     from test_cpacs_airfoil import naca_points
     from test_roskam_adapter import aileron as aileron_geometry
     from test_roskam_adapter import make_wing
 
     x, z = naca_points(0.10)
-    xml = (f'<cpacs><vehicles><aircraft><model><wings><wing uID="w"><sections>'
+    ref = f"<reference><area>{model_area}</area></reference>" if model_area else ""
+    xml = (f'<cpacs><vehicles><aircraft><model uID="M">{ref}<wings><wing uID="w"><sections>'
            f'<section uID="a"><transformation><translation><y>0</y></translation></transformation>'
            f'<elements><element uID="ae"><airfoilUID>P</airfoilUID></element></elements></section>'
            f'<section uID="b"><transformation><translation><y>5</y></translation></transformation>'
@@ -153,3 +154,35 @@ def test_unknown_component_segment(tmp_path):
     aileron["parent_uid"] = "nowhere"
     with pytest.raises(ValueError):
         build_case(doc, aileron)
+
+
+def test_reference_area_and_hinge_thickness_options(tmp_path):
+    from latte.core.airfoil import thickness_ratio_at
+    from latte.core.cpacs_airfoil import read_airfoil_points
+
+    doc, aileron = make_doc(tmp_path, model_area=20.0)
+    default = build_case(doc, aileron, configuration="M")
+    assert default.geometry.aspect_ratio == pytest.approx(100.0 / 20.0)           # b^2 / S_ref
+    assert default.aspect_ratio_source == "CPACS reference area"
+    geometric = build_case(doc, aileron, use_reference_area=False)
+    assert geometric.geometry.aspect_ratio == pytest.approx(100.0 / 15.0)
+    assert geometric.aspect_ratio_source == "wing geometry"
+
+    # hinge-line thickness: airfoil thickness at the hinge chord fraction x local chord (1.25 m)
+    xi = 1 - 0.75 * default.geometry.c_aileron / 1.25
+    expected = thickness_ratio_at(*read_airfoil_points(doc.path, "P"), xi) * 1.25
+    assert default.geometry.hinge_thickness_m == pytest.approx(expected)
+    matlab = build_case(doc, aileron, hinge_thickness="matlab")
+    assert matlab.geometry.hinge_thickness_m is None
+    summary = default.summary()
+    assert summary["  (thickness from)"] == "airfoil at the hinge line"
+    assert matlab.summary()["  (thickness from)"].startswith("t/c x aileron chord")
+    with pytest.raises(ValueError):
+        build_case(doc, aileron, hinge_thickness="nope")
+
+
+def test_no_reference_area_in_the_file_falls_back_to_the_geometry(tmp_path):
+    doc, aileron = make_doc(tmp_path)                  # no <reference> in the model
+    case = build_case(doc, aileron)
+    assert case.geometry.aspect_ratio == pytest.approx(100.0 / 15.0)
+    assert case.aspect_ratio_source == "wing geometry"

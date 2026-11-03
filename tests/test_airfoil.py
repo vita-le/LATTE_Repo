@@ -49,10 +49,33 @@ def test_thicker_airfoil_has_larger_angle():
 
 
 def test_camber_does_not_change_thickness_or_angles():
-    plain = airfoil_properties(*contour(0.10, camber=0.0))
-    cambered = airfoil_properties(*contour(0.10, camber=0.04))
+    plain = airfoil_properties(*contour(0.10, camber=0.0), te_method="secant")
+    cambered = airfoil_properties(*contour(0.10, camber=0.04), te_method="secant")
     assert cambered.t_c == pytest.approx(plain.t_c, abs=1e-4)
     assert cambered.phi_te_1_deg == pytest.approx(plain.phi_te_1_deg, abs=0.05)
+
+
+def test_fit_method_angle_between_the_two_surface_lines():
+    # MATLAB Airfoil_Function: |atan(slope_upper) - atan(slope_lower)|; nearly camber independent
+    plain = airfoil_properties(*contour(0.10, camber=0.0))
+    cambered = airfoil_properties(*contour(0.10, camber=0.04))
+    assert cambered.phi_te_1_deg == pytest.approx(plain.phi_te_1_deg, abs=0.5)
+    secant = airfoil_properties(*contour(0.10), te_method="secant")
+    assert plain.phi_te_1_deg == pytest.approx(secant.phi_te_1_deg, rel=0.02)     # same angle, 2% apart
+
+
+def test_unknown_te_method_is_rejected():
+    with pytest.raises(ValueError):
+        airfoil_properties(*contour(0.10), te_method="magic")
+
+
+def test_thickness_ratio_at_a_chord_fraction():
+    from latte.core.airfoil import thickness_ratio_at
+
+    x, z = contour(0.12)
+    assert thickness_ratio_at(x, z, 0.30) == pytest.approx(0.12, abs=1e-3)       # maximum thickness
+    assert thickness_ratio_at(x, z, 0.784) == pytest.approx(2 * half_thickness(0.784, 0.12), abs=1e-3)
+    assert thickness_ratio_at(x, z, 0.5) > thickness_ratio_at(x, z, 0.9)
 
 
 def test_point_order_and_scale_do_not_matter():

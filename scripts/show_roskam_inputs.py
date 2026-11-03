@@ -12,6 +12,7 @@ from pathlib import Path
 from latte.analysis.roskam.adapter import build_roskam_geometry
 from latte.core.cpacs_airfoil import airfoil_properties_for_aileron, read_wing_sections
 from latte.core.cpacs_document import CPACSDocument
+from latte.core.cpacs_reference import read_reference_area
 
 # F/A-18 SRA values inferred from the MATLAB loop (Results_LOOP_SUB.mat)
 MATLAB_REFERENCE = {
@@ -44,7 +45,9 @@ def main():
             )
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                geo, diag = build_roskam_geometry(wing, doc.aileron_geometry(aileron))
+                reference_area = read_reference_area(path, configuration)
+                geo, diag = build_roskam_geometry(
+                    wing, doc.aileron_geometry(aileron), reference_area=reference_area)
             airfoil = airfoil_properties_for_aileron(path, wing["uid"], geo.y_i, geo.y_o)
 
             print("=" * 72)
@@ -74,6 +77,8 @@ def main():
                 print(line)
             print(f"  Phi_TE_1 = {airfoil.phi_te_1_deg:.2f} deg, Phi_TE_2 = {airfoil.phi_te_2_deg:.2f} deg"
                   + ("   (MATLAB loop: 0, 0)" if compare else ""))
+            print(f"  AR = {geo.aspect_ratio:.4f}: " + (f"b^2 / S_ref with S_ref = {reference_area:.2f} m2 (CPACS reference area)" if reference_area else "from the wing geometry")
+                  + f"; geometric AR = {diag['aspect_ratio_geometric']:.4f}")
             print(f"  S = {diag['planform_area_m2']:.3f} m2 (area from {diag['area_source']}), "
                   f"aileron area = {diag['aileron_area_m2']:.3f} m2")
             print(f"  cf/c: local chord = {diag['cf_ratio_local']:.3f} "

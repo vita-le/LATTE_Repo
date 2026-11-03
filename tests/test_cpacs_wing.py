@@ -216,7 +216,7 @@ def test_matlab_bridge_converges_to_the_regression(generated):
         warnings.simplefilter("ignore")
         rows = matlab_bridge(case, data)
 
-    assert len(rows) == 6 and all(r.failed == 0 for r in rows)
+    assert len(rows) == 7 and all(r.failed == 0 for r in rows)
     first, last = rows[0], rows[-1]
     assert first.cha_max_rel > 0.05                       # CPACS inputs differ from MATLAB's
     assert last.cha_max_rel < 5e-4 and last.chd_max_rel < 2e-4 and last.moment_max_abs < 6.0
